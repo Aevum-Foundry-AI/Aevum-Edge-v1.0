@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aevum Edge Sentinel — Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --stage:#c9c0ae; --bg:#e5ddcd; --surface:#f0e9da; --surface-2:#d8cfba; --line:#d5ccb6;
+    --ink:#2a2418; --muted:#6f6654; --faint:#988d77; --gold:#a9822b;
+    --accent:#4f8a74; --accent-soft:rgba(79,138,116,.14); --accent-line:rgba(79,138,116,.44);
+    --serif:'Instrument Serif',Georgia,serif; --sans:'Inter',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{font-family:var(--sans); color:var(--ink);
+    background:radial-gradient(60% 40% at 50% 0%, rgba(169,130,43,.06), transparent 70%), var(--stage);
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:26px 16px 40px; gap:18px; -webkit-font-smoothing:antialiased;}
+
+  .phone{position:relative; width:100%; max-width:390px; height:min(770px,84vh);
+    background:var(--bg); border:1px solid var(--line); border-radius:40px; overflow:hidden;
+    box-shadow:0 26px 60px -26px rgba(60,48,30,.34), 0 0 0 1px rgba(255,255,255,.6) inset;}
+  .screen{position:absolute; inset:0 0 62px 0; overflow-y:auto; overflow-x:hidden;
+    scrollbar-width:thin; scrollbar-color:rgba(169,130,43,.55) transparent;}
+  .screen::-webkit-scrollbar{width:9px}
+  .screen::-webkit-scrollbar-track{background:transparent; margin:14px 4px}
+  .screen::-webkit-scrollbar-thumb{background:rgba(169,130,43,.5); border-radius:9px; border:2px solid transparent; background-clip:padding-box; min-height:44px;}
+  .screen::-webkit-scrollbar-thumb:hover{background:rgba(169,130,43,.8)}
+
+  .statusbar{position:sticky; top:0; z-index:6; display:flex; align-items:center; justify-content:space-between; padding:13px 18px 11px;
+    background:linear-gradient(var(--bg) 78%, rgba(229,221,205,0)); font-size:11px; color:var(--muted);}
+  .statusbar .conn{display:flex; align-items:center; gap:6px}
+  .dot{width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 7px var(--accent)}
+  .dot.demo{background:var(--faint); box-shadow:none}
+  .lock{display:flex; align-items:center; gap:5px}
+  .lock svg{width:11px; height:11px; stroke:var(--accent)}
+  .sb-right{display:flex; align-items:center; gap:11px}
+  .clock{font-variant-numeric:tabular-nums}
+  .profile{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
+    font-size:10px;font-weight:600;cursor:pointer;display:grid;place-items:center;transition:.2s}
+  .profile:hover{border-color:var(--accent-line);color:var(--accent)}
+  .profile.on{border-color:var(--accent-line); color:var(--accent); background:var(--accent-soft)}
+  .qmoon{position:absolute; top:16px; right:16px; width:34px; height:34px; border-radius:50%; border:1px solid var(--accent-line); background:var(--accent-soft); color:var(--accent); font-size:15px; cursor:pointer; display:grid; place-items:center; z-index:2}
+  .qmoon:hover{filter:brightness(1.04)}
+
+  .content{padding:2px 16px 22px}
+  .panel{display:none} .panel.on{display:block}
+  .ptitle{font-family:var(--serif); font-size:26px; margin:6px 2px 2px; color:var(--ink)}
+  .psub{font-size:12px; color:var(--muted); margin:0 2px 14px}
+
+  /* hero */
+  .hero{position:relative; height:262px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;}
+  .halo{position:absolute; top:50%; left:50%; width:250px; height:250px; transform:translate(-50%,-50%); border-radius:50%; pointer-events:none;}
+  .halo span{position:absolute; inset:0; border-radius:50%; border:1.5px solid var(--accent-line); animation:breathe 5.2s ease-in-out infinite;}
+  .halo span:nth-child(2){animation-delay:.9s; opacity:.6} .halo span:nth-child(3){animation-delay:1.8s; opacity:.35}
+  @keyframes breathe{0%,100%{transform:scale(.80); opacity:.16} 50%{transform:scale(1); opacity:.6}}
+  .halo .core{position:absolute; inset:31%; border-radius:50%; background:radial-gradient(circle,var(--accent-soft),transparent 72%); animation:pulse 5.2s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.4;transform:scale(.9)} 50%{opacity:.85;transform:scale(1.04)}}
+  .eyebrow{position:relative; font-family:var(--mono); font-size:10.5px; letter-spacing:.28em; text-transform:uppercase; color:var(--muted); margin-bottom:3px;}
+  .state-word{position:relative; font-family:var(--serif); font-size:60px; line-height:1; color:var(--accent); transition:color .9s ease;}
+  .state-sub{position:relative; margin-top:7px; font-size:13px; color:var(--muted); font-style:italic; font-family:var(--serif);}
+
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:16px;}
+  .why{padding:15px 16px; margin-top:2px;} .why p{font-size:14px; line-height:1.55} .why b{color:var(--accent); font-weight:600}
+
+  /* weather strip */
+  .weather{display:flex; align-items:center; gap:12px; padding:12px 15px; margin-top:12px;}
+  .weather .wx{font-size:26px; line-height:1} .weather .wtemp{font-size:20px; font-weight:600; font-variant-numeric:tabular-nums}
+  .weather .wmeta{flex:1} .weather .wplace{font-size:12px; color:var(--ink); font-weight:500; display:flex; align-items:center; gap:4px}
+  .weather .wplace svg{width:10px;height:10px;stroke:var(--muted)}
+  .weather .wline{font-size:11px; color:var(--muted); margin-top:2px; line-height:1.35}
+
+  /* metrics */
+  .metrics{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px;}
+  .m{background:var(--surface); border:1px solid var(--line); border-radius:13px; padding:11px 7px 10px; text-align:center;}
+  .m .lab{font-size:9.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--faint)}
+  .m .val{font-size:21px; font-weight:600; margin-top:5px; font-variant-numeric:tabular-nums; line-height:1.05}
+  .m .val.word{font-family:var(--serif); font-weight:400; font-size:22px; color:var(--accent); transition:color .8s}
+  .m .val .u{font-size:10px; color:var(--muted); font-weight:500; margin-left:1px}
+  .m .note{font-size:9.5px; margin-top:4px; color:var(--muted); line-height:1.25}
+  .steps{grid-column:span 4; display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid var(--line); border-radius:13px; padding:12px 15px;}
+  .ring{--p:0; width:44px; height:44px; border-radius:50%; flex:none; background:conic-gradient(var(--gold) calc(var(--p)*1%), var(--surface-2) 0); display:grid; place-items:center; transition:background .8s;}
+  .ring i{width:34px; height:34px; border-radius:50%; background:var(--surface); display:grid; place-items:center; font-size:9px; color:var(--muted); font-style:normal}
+  .steps .n{font-size:22px; font-weight:600; font-variant-numeric:tabular-nums} .steps .sub{font-size:11px; color:var(--muted); margin-top:1px}
+  .steps .cap{margin-left:auto; text-align:right; font-size:9.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--faint)}
+
+  /* live chart */
+  .chart{padding:13px 14px 11px; margin-top:12px;}
+  .chart .ch-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:9px}
+  .chart .tt{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); font-weight:600}
+  .chart .tabs{display:flex; gap:4px}
+  .chart .tabs button{font-family:var(--mono); font-size:10px; color:var(--muted); background:transparent; border:1px solid var(--line); border-radius:7px; padding:4px 9px; cursor:pointer; transition:.2s}
+  .chart .tabs button.on{color:var(--ink); border-color:var(--accent-line); background:var(--accent-soft)}
+  .chart canvas{width:100%; height:96px; display:block}
+  .chart .legend{display:flex; gap:14px; margin-top:8px; font-size:10px; color:var(--muted); font-family:var(--mono)}
+  .chart .legend i{display:inline-block; width:14px; height:0; vertical-align:middle; margin-right:5px}
+  .chart .legend .lz i{border-top:2px solid var(--accent)} .chart .legend .lb i{border-top:1px dashed var(--faint)}
+  .chart .legend .ln{margin-left:auto} .chart .legend .ln b{color:var(--accent)}
+
+  /* mood */
+  .mood{padding:14px 15px; margin-top:12px;}
+  .mood h4,.journal h4,.baseline h4,.contrib h4{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); font-weight:600; margin-bottom:11px; display:flex; justify-content:space-between}
+  .mood h4 span,.journal h4 span{color:var(--muted); font-weight:400; text-transform:none; letter-spacing:0; font-size:11px; font-style:italic; font-family:var(--serif)}
+  .faces{display:flex; gap:6px; justify-content:space-between}
+  .faces button{flex:1; background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:9px 2px 7px; cursor:pointer; transition:.16s; display:flex; flex-direction:column; align-items:center; gap:4px}
+  .faces button:hover{border-color:var(--accent-line)}
+  .faces button.on{background:var(--accent-soft); border-color:var(--accent-line)}
+  .faces .fe{font-size:20px; line-height:1} .faces .fl{font-size:8.5px; color:var(--muted); letter-spacing:.01em}
+  .faces button.on .fl{color:var(--accent)}
+
+  /* tags */
+  .journal{padding:14px 15px; margin-top:12px;}
+  .chips{display:flex; flex-wrap:wrap; gap:7px}
+  .chips button{font-size:12px; color:var(--muted); background:var(--surface-2); border:1px solid var(--line); border-radius:20px; padding:7px 12px; cursor:pointer; transition:.18s;}
+  .chips button:hover{color:var(--ink)} .chips button.on{background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent); font-weight:500}
+  .jnote{margin-top:12px; font-size:12.5px; line-height:1.5; color:var(--ink); font-family:var(--serif); font-style:italic; border-left:2px solid var(--accent-line); padding-left:11px; min-height:19px;}
+  .jnote .agent{font-style:normal; font-family:var(--mono); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); display:block; margin-bottom:3px}
+
+  /* baseline + contributors */
+  .baseline,.contrib{padding:14px 15px; margin-top:12px;}
+  .bar-row{margin-bottom:12px} .bar-row:last-child{margin-bottom:0}
+  .bar-row .bl-lab{font-size:11.5px; color:var(--muted); margin-bottom:5px; display:flex; justify-content:space-between}
+  .bar-row .bl-lab b{color:var(--ink); font-weight:500; font-style:italic; font-family:var(--serif)}
+  .track{position:relative; height:6px; background:var(--surface-2); border-radius:4px;}
+  .track .base{position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--faint); border-radius:2px;}
+  .track .base::after{content:'you'; position:absolute; top:-13px; left:50%; transform:translateX(-50%); font-size:7.5px; text-transform:uppercase; color:var(--faint)}
+  .track .fill{position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:var(--accent); width:0; transition:width .9s cubic-bezier(.2,.7,.2,1), background .9s;}
+  .baseline .tick{text-align:center; font-size:9px; color:var(--faint); margin-top:9px}
+  .contrib .row{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); font-size:12.5px}
+  .contrib .row:last-child{border:0} .contrib .row .cn{flex:1; color:var(--ink)}
+  .contrib .row .ar{width:16px; text-align:center; font-weight:600}
+  .contrib .cr{display:flex; flex-direction:column; align-items:flex-end; line-height:1.3}
+  .contrib .cr b{font-weight:600; font-variant-numeric:tabular-nums; color:var(--ink); font-size:13px}
+  .contrib .cr i{font-style:normal; color:var(--faint); font-size:10px; font-variant-numeric:tabular-nums}
+  .ar.good{color:var(--accent)} .ar.warn{color:var(--gold)} .ar.even{color:var(--faint)}
+
+  .rec-head{padding:18px 16px; text-align:center; margin-top:2px}
+  .rec-head .rw{font-family:var(--serif); font-size:52px; line-height:1; color:var(--accent); transition:color .8s; font-variant-numeric:tabular-nums}
+  .rec-head .rw .rpct{font-size:22px; color:var(--muted); margin-left:2px}
+  .rec-head .rl{font-size:12px; color:var(--muted); margin-top:6px; font-style:italic; font-family:var(--serif)}
+
+  /* trends */
+  .trend{padding:14px 15px; margin-top:12px}
+  .trend .th{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:18px}
+  .trend .th .tl{font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); font-weight:600}
+  .trend .th .tv{font-size:11px; color:var(--muted)} .trend .th .tv b{color:var(--accent); font-style:italic; font-family:var(--serif); font-weight:400}
+  .bars{display:flex; align-items:flex-end; gap:6px; height:74px; position:relative}
+  .bars .bl{position:absolute; left:0; right:0; border-top:1px dashed var(--faint); z-index:0}
+  .bars .col{flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:5px; height:100%; z-index:1}
+  .bars .bar{position:relative; width:70%; max-width:22px; border-radius:5px 5px 2px 2px; background:var(--accent); transition:height .7s cubic-bezier(.2,.7,.2,1)}
+  .bars .bv{position:absolute; top:-14px; left:50%; transform:translateX(-50%); font-size:8px; color:var(--muted); white-space:nowrap; font-variant-numeric:tabular-nums}
+  .bars .dl{font-size:8.5px; color:var(--faint)}
+  .tlegend{display:flex; gap:14px; margin:-6px 2px 6px; font-size:10px; color:var(--muted)}
+  .tlegend i{display:inline-block; width:9px; height:9px; border-radius:3px; vertical-align:middle; margin-right:5px}
+  .sbars{display:flex; align-items:flex-end; gap:6px; height:96px}
+  .scol{flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:5px; height:100%}
+  .sbar{position:relative; width:72%; max-width:24px}
+  .sfill{position:absolute; inset:0; display:flex; flex-direction:column-reverse; border-radius:5px 5px 2px 2px; overflow:hidden}
+  .sseg{width:100%}
+  .sbar .sbv{position:absolute; top:-14px; left:50%; transform:translateX(-50%); font-size:8px; color:var(--muted); white-space:nowrap; font-variant-numeric:tabular-nums}
+  .slegend{display:flex; gap:12px; flex-wrap:wrap; margin-top:13px; font-size:10px; color:var(--muted)}
+  .slegend i{display:inline-block; width:9px; height:9px; border-radius:3px; vertical-align:middle; margin-right:5px}
+  .scap{margin-top:10px; font-size:10px; line-height:1.5; color:var(--faint); font-style:italic; font-family:var(--serif)}
+  .scol{cursor:pointer}
+  .hyp{display:flex; height:16px; border-radius:6px; overflow:hidden; margin:14px 0 16px}
+  .hyp i{display:block; height:100%}
+  .srow{display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:13px}
+  .srow:last-child{border:0}
+  .srow .sk{width:11px; height:11px; border-radius:3px; flex:none}
+  .srow .snm{flex:1; color:var(--ink)}
+  .srow .smin{font-weight:600; font-variant-numeric:tabular-nums; color:var(--ink)}
+  .srow .spc{width:42px; text-align:right; color:var(--muted); font-size:11.5px; font-variant-numeric:tabular-nums}
+  .tagrow{display:flex; align-items:center; gap:10px; padding:7px 0; font-size:12px}
+  .tagrow .tn{width:98px; color:var(--ink)}
+  .tagrow .tbar{flex:1; height:7px; background:var(--surface-2); border-radius:4px; overflow:hidden}
+  .tagrow .tbar i{display:block; height:100%; background:var(--accent); border-radius:4px; transition:width .6s}
+  .tagrow .tc{width:24px; text-align:right; color:var(--muted); font-variant-numeric:tabular-nums}
+  .emptylog{font-size:12px; color:var(--muted); font-style:italic; font-family:var(--serif); line-height:1.5}
+  .gcard .pos{margin-top:8px; color:var(--muted); font-size:12.5px; line-height:1.5}
+  .gcard p b{color:var(--accent); font-weight:600}
+
+  /* guidance */
+  .gcard{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:15px 16px; margin-top:12px}
+  .gcard.pri{border-color:var(--accent-line); box-shadow:0 6px 20px -14px rgba(79,138,116,.5)}
+  .gcard .gh{display:flex; align-items:center; gap:9px; margin-bottom:8px}
+  .gcard .gi{font-size:18px} .gcard .gt{font-family:var(--serif); font-size:19px; color:var(--ink)}
+  .gcard .gtag{margin-left:auto; font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); background:var(--accent-soft); border:1px solid var(--accent-line); border-radius:20px; padding:3px 8px}
+  .gcard p{font-size:13px; line-height:1.55; color:var(--ink)}
+  .gcard .care{margin-top:9px; font-size:11px; color:var(--muted); font-style:italic; display:flex; gap:6px; align-items:flex-start}
+  .gcard .care svg{width:12px;height:12px;flex:none;stroke:var(--gold);margin-top:2px}
+  .gcard .links{margin-top:10px; display:flex; flex-direction:column; gap:6px}
+  .gcard .links a{font-size:11.5px; color:var(--accent); text-decoration:none; display:flex; align-items:center; gap:6px; font-family:var(--mono)}
+  .gcard .links a:hover{text-decoration:underline}
+  .gcard .links a svg{width:11px;height:11px;stroke:currentColor;flex:none}
+  .gfoot{margin-top:14px; padding:12px 14px; border:1px dashed var(--line); border-radius:12px; font-size:11px; line-height:1.5; color:var(--muted); font-style:italic; font-family:var(--serif)}
+  .gfoot b{color:var(--accent); font-style:normal; font-family:var(--sans); font-weight:600}
+
+  /* signpost + trace */
+  .signpost{margin-top:12px; border:1px solid var(--accent-line); background:var(--accent-soft); border-radius:14px; padding:13px 15px; display:none; gap:11px; align-items:flex-start;}
+  .signpost.show{display:flex} .signpost svg{width:16px;height:16px;flex:none;stroke:var(--accent);margin-top:1px} .signpost p{font-size:12.5px; line-height:1.5}
+  .trace{margin-top:12px; border:1px solid var(--line); border-radius:14px; overflow:hidden; background:#ece4d4;}
+  .trace summary{list-style:none; cursor:pointer; padding:12px 15px; display:flex; align-items:center; gap:9px; font-size:11.5px; color:var(--muted);}
+  .trace summary::-webkit-details-marker{display:none}
+  .trace summary .tg{margin-left:auto; transition:transform .25s; color:var(--faint)} .trace[open] summary .tg{transform:rotate(90deg)}
+  .trace .agent-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent)}
+  .trace pre{font-family:var(--mono); font-size:10.5px; line-height:1.75; color:var(--muted); padding:2px 15px 8px; white-space:pre; overflow-x:auto;}
+  .trace pre .t{color:var(--accent)} .trace pre .k{color:var(--gold)} .trace pre .d{color:var(--faint)}
+  .trace .cap{padding:0 15px 12px; font-size:10px; color:var(--faint); font-style:italic; font-family:var(--serif)}
+
+  footer{margin-top:16px; padding-top:14px; border-top:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;}
+  footer .df{font-family:var(--serif); font-style:italic; font-size:13px; color:var(--muted)}
+  footer .brand{font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--faint)} footer .brand b{color:var(--gold); font-weight:600}
+
+  /* tab bar */
+  .tabbar{position:absolute; left:0; right:0; bottom:0; height:62px; display:flex; z-index:8;
+    background:rgba(229,221,205,.94); backdrop-filter:blur(8px); border-top:1px solid var(--line);}
+  .tabbar button{flex:1; background:transparent; border:0; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; color:var(--faint); transition:.2s; position:relative; padding-top:3px}
+  .tabbar button svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .tabbar button .tlab{font-size:9.5px; letter-spacing:.02em}
+  .tabbar button.on{color:var(--accent)}
+  .tabbar button.on::before{content:''; position:absolute; top:0; width:26px; height:2px; border-radius:2px; background:var(--accent)}
+
+  /* onboarding sheet */
+  .sheet{position:absolute; inset:0; z-index:20; background:rgba(40,34,25,.34); backdrop-filter:blur(2px); display:none; align-items:flex-end;}
+  .sheet.show{display:flex}
+  .sheet .card2{width:100%; background:var(--bg); border-radius:26px 26px 40px 40px; padding:20px 20px 26px; max-height:88%; overflow-y:auto; box-shadow:0 -14px 40px -10px rgba(40,34,25,.4);}
+  .sheet h3{font-family:var(--serif); font-size:24px; margin-bottom:4px}
+  .sheet .lead{font-size:12.5px; color:var(--muted); margin-bottom:16px; line-height:1.5}
+  .field{margin-bottom:15px} .field .fl2{font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); font-weight:600; margin-bottom:8px; display:block}
+  .field .fl2 em{text-transform:none; letter-spacing:0; font-style:italic; font-family:var(--serif); color:var(--muted); font-weight:400}
+  .opts{display:flex; flex-wrap:wrap; gap:7px}
+  .opts button{font-size:12.5px; color:var(--muted); background:var(--surface-2); border:1px solid var(--line); border-radius:20px; padding:8px 13px; cursor:pointer; transition:.16s}
+  .opts button.on{background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent); font-weight:500}
+  .row2{display:flex; gap:10px} .row2 .field{flex:1}
+  .field input{width:100%; font-family:var(--sans); font-size:14px; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:11px 12px; -webkit-appearance:none}
+  .field input:focus{outline:2px solid var(--accent-line); outline-offset:0}
+  .sheet .acts{display:flex; gap:10px; margin-top:8px}
+  .sheet .acts button{flex:1; font-family:var(--sans); font-size:13px; font-weight:500; border-radius:12px; padding:13px; cursor:pointer; transition:.2s}
+  .sheet .save{background:var(--accent); color:#fff; border:1px solid var(--accent)}
+  .sheet .skip{background:transparent; color:var(--muted); border:1px solid var(--line)}
+  .sheet .priv{margin-top:12px; font-size:10.5px; color:var(--faint); line-height:1.5; display:flex; gap:6px; align-items:flex-start}
+  .sheet .priv svg{width:12px;height:12px;stroke:var(--accent);flex:none;margin-top:1px}
+
+  /* controls */
+  .controls{width:100%; max-width:390px;}
+  .controls .clab{font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); text-align:center; margin:0 0 8px;}
+  .seg{display:flex; gap:6px; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:5px; margin-bottom:9px}
+  .seg button{flex:1; font-family:var(--sans); font-size:12px; font-weight:500; color:var(--muted); background:transparent; border:0; border-radius:8px; padding:9px 4px; cursor:pointer; transition:.2s;}
+  .seg button:hover{color:var(--ink)} .seg button.on{background:var(--surface-2); color:var(--ink)}
+  .live{display:flex; align-items:center; justify-content:center; gap:10px; margin-top:4px;}
+  .switch{position:relative; width:40px; height:22px; flex:none}
+  .switch input{opacity:0; width:100%; height:100%; margin:0; cursor:pointer}
+  .switch .sl{position:absolute; inset:0; background:var(--surface-2); border:1px solid var(--line); border-radius:22px; transition:.25s; pointer-events:none}
+  .switch .sl::before{content:''; position:absolute; width:16px; height:16px; left:3px; top:2px; background:var(--muted); border-radius:50%; transition:.25s}
+  .switch input:checked + .sl{background:var(--accent-soft); border-color:var(--accent-line)}
+  .switch input:checked + .sl::before{transform:translateX(18px); background:var(--accent)}
+  .live label{font-size:12px; color:var(--muted); cursor:pointer}
+  .live-status{margin-top:9px; font-family:var(--mono); font-size:10.5px; line-height:1.5; color:var(--faint); text-align:center; min-height:15px; padding:0 8px;} .live-status b{color:var(--accent)}
+  .liveribbon{margin:2px 0 10px; padding:8px 11px; border-radius:10px; background:var(--accent-soft); border:1px solid var(--accent-line); font-size:11px; color:var(--muted); line-height:1.45} .liveribbon b{color:var(--accent); font-weight:600}
+  .glead{font-family:var(--serif); font-size:15px; line-height:1.5; color:var(--ink); margin:0 2px 12px; font-style:italic}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+  /* today's energy / pacing band */
+  .energy{padding:14px 15px; margin-top:12px}
+  .eh{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:11px}
+  .eh .etitle{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); font-weight:600}
+  .eh .elabel{font-family:var(--serif); font-size:18px; color:var(--accent); transition:color .8s}
+  .ebar{position:relative; height:9px; border-radius:6px; background:linear-gradient(90deg,#b1553d,#b0792a 52%,#4f8a74); opacity:.92}
+  .emark{position:absolute; top:-4px; bottom:-4px; width:3px; border-radius:3px; background:var(--ink); box-shadow:0 0 0 2px var(--bg); left:50%; transition:left .9s cubic-bezier(.2,.7,.2,1)}
+  .escale{display:flex; justify-content:space-between; margin-top:6px; font-size:9px; letter-spacing:.05em; text-transform:uppercase; color:var(--faint)}
+  .enote{margin-top:10px; font-size:12.5px; line-height:1.5; color:var(--ink); font-style:italic; font-family:var(--serif)}
+  .whyin{margin-top:13px; padding-top:13px; border-top:1px solid var(--line); font-size:14px; line-height:1.55; color:var(--ink)}
+  .whyin b{color:var(--accent); font-weight:600}
+  /* quiet mode — dim the lights: an unmistakably calmer, darker state */
+  .quietview{position:absolute; inset:0; z-index:16; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:34px;
+    background:radial-gradient(125% 90% at 50% 32%, #33403f 0%, #262d2f 46%, #191d1f 100%); color:#e9eeeb; animation:quietFade .5s ease}
+  .quietview.show{display:flex}
+  @keyframes quietFade{from{opacity:0} to{opacity:1}}
+  .quietview .halo{width:250px; height:250px}
+  .quietview .halo span{border-color:rgba(190,214,205,.30)}
+  .quietview .halo span:nth-child(2){opacity:.45} .quietview .halo span:nth-child(3){opacity:.24}
+  .quietview .halo .core{background:radial-gradient(circle, rgba(150,196,182,.5), transparent 72%)}
+  .quietview .qmoon{border-color:rgba(233,238,235,.3); background:rgba(255,255,255,.06); color:#eef3f0}
+  .qpill{position:relative; font-family:var(--mono); font-size:9.5px; letter-spacing:.24em; text-transform:uppercase; color:rgba(233,238,235,.5); margin-bottom:10px}
+  .qword{position:relative; font-family:var(--serif); font-size:56px; line-height:1; color:#eef3f0; opacity:.94; transition:color .9s}
+  .qline{position:relative; margin-top:15px; max-width:250px; font-size:14.5px; line-height:1.65; color:rgba(233,238,235,.74); font-style:italic; font-family:var(--serif)}
+  .qexit{position:relative; margin-top:34px; font-family:var(--sans); font-size:12px; color:rgba(233,238,235,.82); background:rgba(255,255,255,.06); border:1px solid rgba(233,238,235,.28); border-radius:20px; padding:9px 18px; cursor:pointer; transition:.2s}
+  .qexit:hover{color:#fff; border-color:rgba(233,238,235,.5); background:rgba(255,255,255,.1)}
+  /* doctor summary */
+  .docbtn{margin-top:11px; width:100%; font-family:var(--sans); font-size:13px; font-weight:500; color:#fff; background:var(--accent); border:1px solid var(--accent); border-radius:11px; padding:11px; cursor:pointer; transition:.2s}
+  .docbtn:hover{filter:brightness(1.05)}
+  .sumrow{display:flex; align-items:baseline; gap:12px; padding:9px 0; border-bottom:1px solid var(--line); font-size:13px}
+  .sumrow:last-child{border:0}
+  .sumrow .snm2{flex:1; color:var(--muted)}
+  .sumrow .sv2{font-weight:600; color:var(--ink); text-align:right; font-variant-numeric:tabular-nums}
+  @media (max-width:400px){ .state-word{font-size:52px} .halo{width:228px;height:228px} }
+  @media (prefers-reduced-motion:reduce){ .halo span,.halo .core{animation:none} *{transition-duration:.001ms !important} }
+</style>
+</head>
+<body>
+  <main class="phone" id="phone">
+    <div class="screen" id="screen">
+      <div class="statusbar">
+        <span class="lock"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Consent active</span>
+        <span class="sb-right">
+          <span class="conn"><span class="dot demo" id="connDot"></span><span id="connLabel">Demo</span></span>
+          <span class="clock" id="clock">—</span>
+          <button class="profile" id="quietBtn" aria-label="Quiet mode" title="Quiet mode — hide the numbers">☾</button>
+          <button class="profile" id="profileBtn" aria-label="Your profile" title="Your profile">A</button>
+        </span>
+      </div>
+
+      <!-- TODAY -->
+      <section class="panel on content" data-panel="today">
+        <div class="hero">
+          <div class="halo"><span></span><span></span><span></span><div class="core"></div></div>
+          <div class="eyebrow">Your reading</div>
+          <div class="state-word" id="stateWord">Steady</div>
+          <div class="state-sub" id="stateSub">against your own baseline</div>
+        </div>
+
+        <section class="card energy">
+          <div class="eh"><span class="etitle">Today's energy</span><span class="elabel" id="eLabel">Full day</span></div>
+          <div class="ebar"><div class="emark" id="eMark"></div></div>
+          <div class="escale"><span>rest</span><span>full day</span></div>
+          <p class="enote" id="eNote"></p>
+          <p class="whyin" id="why"></p>
+        </section>
+
+        <div class="metrics">
+          <div class="m"><div class="lab">Heart rate</div><div class="val"><span id="v-hr">62</span><span class="u">bpm</span></div><div class="note" id="n-hr">typical for you</div></div>
+          <div class="m"><div class="lab">Recovery</div><div class="val word" id="v-rec">Strong</div><div class="note" id="n-rec">above your usual</div></div>
+          <div class="m"><div class="lab">Blood O₂</div><div class="val"><span id="v-spo2">98</span><span class="u">%</span></div><div class="note" id="n-spo2">normal</div></div>
+          <div class="m"><div class="lab">Skin temp</div><div class="val word" id="v-temp">Normal</div><div class="note" id="n-temp">steady overnight</div></div>
+          <div class="steps">
+            <div class="ring" id="stepRing"><i id="stepPct">78%</i></div>
+            <div><div class="n"><span id="v-steps">6240</span></div><div class="sub">steps today</div></div>
+            <div class="cap">gentle goal<br>8,000</div>
+          </div>
+        </div>
+
+        <div class="card chart">
+          <div class="ch-head"><span class="tt">Live signals · last 60s</span>
+            <div class="tabs" role="group" aria-label="Choose signal"><button class="on" data-sig="hr">Heart rate</button><button data-sig="hrv">Recovery</button></div>
+          </div>
+          <canvas id="spark" width="720" height="192" aria-label="Live reading with your normal range"></canvas>
+          <div class="legend"><span class="lz"><i></i>you now</span><span class="lb"><i></i>your normal range</span><span class="ln"><b id="chNow">—</b></span></div>
+        </div>
+
+        <div class="card mood">
+          <h4>How do you feel? <span>optional</span></h4>
+          <div class="faces" id="faces">
+            <button data-mood="energetic"><span class="fe">😃</span><span class="fl">Energetic</span></button>
+            <button data-mood="good"><span class="fe">🙂</span><span class="fl">Good</span></button>
+            <button data-mood="tired"><span class="fe">😴</span><span class="fl">Tired</span></button>
+            <button data-mood="anxious"><span class="fe">😟</span><span class="fl">Anxious</span></button>
+            <button data-mood="overworked"><span class="fe">😩</span><span class="fl">Overworked</span></button>
+            <button data-mood="low"><span class="fe">😔</span><span class="fl">Low</span></button>
+          </div>
+        </div>
+
+        <div class="card journal">
+          <h4>How was today? <span>optional — it helps me learn</span></h4>
+          <div class="chips" id="chips">
+            <button data-tag="slept-well">Slept well</button><button data-tag="slept-late">Slept late</button>
+            <button data-tag="caffeine">Late caffeine</button><button data-tag="alcohol">A drink</button>
+            <button data-tag="exercise">Exercised</button><button data-tag="stress">Stressful day</button><button data-tag="travel">Travelled</button>
+          </div>
+          <p class="jnote" id="jnote"><span class="agent">Sentinel Agent</span>Tag your day and how you feel — over time I'll show what actually moves your recovery, and tune your guidance to it.</p>
+        </div>
+
+        <div class="signpost" id="signpost">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 8v4m0 4h.01"/><circle cx="12" cy="12" r="9"/></svg>
+          <p id="signpostText"></p>
+        </div>
+
+        <details class="trace" id="trace">
+          <summary><span class="agent-dot"></span>How the Sentinel Agent reached this<span class="tg">›</span></summary>
+          <pre id="traceBody"></pre>
+          <div class="cap">The steps the on-device agent ran — normally hidden. Tap to hide.</div>
+        </details>
+
+        <footer><span class="df">Wellbeing, not diagnosis.</span><span class="brand"><b>Aevum</b> Edge Sentinel</span></footer>
+      </section>
+
+      <!-- RECOVERY -->
+      <section class="panel content" data-panel="recovery">
+        <div class="ptitle">Recovery</div>
+        <div class="psub">How rested you are today, blended from several overnight signals — against your own baseline.</div>
+        <div class="card rec-head"><div class="rw"><span id="recBig">82</span><span class="rpct">%</span></div><div class="rl" id="recLine">above your usual range</div></div>
+        <div class="card contrib">
+          <h4>What went into it</h4>
+          <div id="contribRows"></div>
+        </div>
+        <div class="card baseline">
+          <h4>You vs your own baseline</h4>
+          <div class="bar-row"><div class="bl-lab"><span>Resting heart rate</span><b id="bl-hr-t">right in your range</b></div><div class="track"><div class="base" style="left:50%"></div><div class="fill" id="bl-hr"></div></div></div>
+          <div class="bar-row"><div class="bl-lab"><span>Recovery (overnight)</span><b id="bl-rec-t">a little above usual</b></div><div class="track"><div class="base" style="left:50%"></div><div class="fill" id="bl-rec"></div></div></div>
+          <div class="tick">the marker is <b>your</b> normal — the bar is where you are now</div>
+        </div>
+      </section>
+
+      <!-- TRENDS -->
+      <section class="panel content" data-panel="trends">
+        <div class="ptitle">Trends</div>
+        <div class="psub">Your last 7 days. Patterns matter more than any single day.</div>
+        <div class="tlegend"><span><i style="background:#4f8a74"></i>good</span><span><i style="background:#b0792a"></i>watch</span><span><i style="background:#b1553d"></i>elevated</span></div>
+        <div class="card trend">
+          <div class="th"><span class="tl">Recovery</span><span class="tv">7-day avg <b id="tr-rec-avg">—</b></span></div>
+          <div class="bars" id="tr-rec"></div>
+        </div>
+        <div class="card trend">
+          <div class="th"><span class="tl">Resting heart rate</span><span class="tv">7-day avg <b id="tr-hr-avg">—</b></span></div>
+          <div class="bars" id="tr-hr"></div>
+        </div>
+        <div class="card trend">
+          <div class="th"><span class="tl">Steps</span><span class="tv">7-day avg <b id="tr-st-avg">—</b></span></div>
+          <div class="bars" id="tr-st"></div>
+        </div>
+        <div class="card trend">
+          <div class="th"><span class="tl">Sleep</span><span class="tv">7-night avg <b id="tr-sl-avg">—</b></span></div>
+          <div class="sbars" id="tr-sleep"></div>
+          <div class="slegend"><span><i style="background:#34655c"></i>Deep</span><span><i style="background:#7aa996"></i>Light</span><span><i style="background:#9b8bc4"></i>REM</span><span><i style="background:#e0d3b6"></i>Awake</span></div>
+          <div class="scap">Stages are estimated from movement &amp; heart rate — a guide to your nights, not a clinical sleep study.</div>
+        </div>
+        <div class="card trend">
+          <div class="th"><span class="tl">How you felt</span><span class="tv">this week</span></div>
+          <div class="bars" id="tr-mood"></div>
+        </div>
+        <div class="card trend">
+          <div class="th"><span class="tl">What you logged</span><span class="tv">this week</span></div>
+          <div id="tr-tags"></div>
+        </div>
+      </section>
+
+      <!-- GUIDANCE -->
+      <section class="panel content" data-panel="guidance">
+        <div class="ptitle">Guidance</div>
+        <div class="psub" id="gsub">Personal, gentle, and always signposting — never a diagnosis, never a dose.</div>
+        <div id="guidanceList"></div>
+        <div class="gfoot"><b>How this works:</b> the Sentinel Agent writes these in your own context, but it only ever recommends from vetted, cited guidance cards — so it can't invent a fact, a dose, or a study. Links go to real research and health authorities.</div>
+        <div class="gcard" style="margin-top:14px">
+          <div class="gh"><span class="gi">🩺</span><span class="gt">Bring this to your doctor</span></div>
+          <p>A clean summary of your week you can share with a professional — because Edge Sentinel signposts, it doesn't diagnose.</p>
+          <button class="docbtn" id="docBtn">Open wellbeing summary</button>
+        </div>
+      </section>
+    </div>
+
+    <nav class="tabbar" role="tablist">
+      <button class="on" data-go="today"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2"/></svg><span class="tlab">Today</span></button>
+      <button data-go="recovery"><svg viewBox="0 0 24 24"><path d="M20.8 6.6a5 5 0 0 0-8.8-2 5 5 0 0 0-8.8 2c-1 3 1 6 8.8 11 7.8-5 9.8-8 8.8-11z"/></svg><span class="tlab">Recovery</span></button>
+      <button data-go="trends"><svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 4 8-8"/><path d="M16 8h4v4"/></svg><span class="tlab">Trends</span></button>
+      <button data-go="guidance"><svg viewBox="0 0 24 24"><path d="M12 3l2.4 5 5.6.6-4 3.9 1 5.5-5-2.9-5 2.9 1-5.5-4-3.9 5.6-.6z"/></svg><span class="tlab">Guidance</span></button>
+    </nav>
+
+    <!-- ONBOARDING -->
+    <div class="sheet" id="sheet">
+      <div class="card2">
+        <h3>Set your baseline</h3>
+        <p class="lead">A few optional details help the Sentinel Agent read your signals against the right reference — and tune your guidance. You can skip any of it.</p>
+        <div class="field"><span class="fl2">Age</span><div class="opts" id="ob-age">
+          <button data-v="18–29">18–29</button><button data-v="30–44">30–44</button><button data-v="45–59">45–59</button><button data-v="60+">60+</button></div></div>
+        <div class="field"><span class="fl2">Sex <em>— for heart-rate norms</em></span><div class="opts" id="ob-sex">
+          <button data-v="female">Female</button><button data-v="male">Male</button><button data-v="na">Prefer not to say</button></div></div>
+        <div class="row2">
+          <div class="field"><span class="fl2">Height <em>optional</em></span><input id="ob-h" inputmode="numeric" placeholder="cm"></div>
+          <div class="field"><span class="fl2">Weight <em>optional</em></span><input id="ob-w" inputmode="numeric" placeholder="kg"></div>
+        </div>
+        <div class="acts"><button class="skip" id="obSkip">Skip for now</button><button class="save" id="obSave">Save</button></div>
+        <div class="priv"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          Stays on your device. Used only to personalise your readings — never shared, never used to diagnose.</div>
+      </div>
+    </div>
+
+    <!-- SLEEP NIGHT DETAIL -->
+    <div class="sheet" id="sleepSheet">
+      <div class="card2">
+        <h3 id="slTitle">Sleep detail</h3>
+        <p class="lead" id="slLead"></p>
+        <div class="hyp" id="slHyp"></div>
+        <div id="slRows"></div>
+        <div class="acts" style="margin-top:16px"><button class="save" id="slClose" style="flex:1">Close</button></div>
+        <div class="priv"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          Stages are estimated from movement &amp; heart rate — a guide, not a clinical sleep study.</div>
+      </div>
+    <!-- QUIET MODE -->
+    <div class="quietview" id="quietview">
+      <button class="qmoon" id="quietOff" aria-label="Turn quiet mode off" title="Quiet mode off">☾</button>
+      <div class="halo"><span></span><span></span><span></span><div class="core"></div></div>
+      <div class="qpill">Quiet mode · consent active</div>
+      <div class="qword" id="qWord">Steady</div>
+      <div class="qline" id="qLine"></div>
+      <button class="qexit" id="quietExit">Return to full view</button>
+    </div>
+
+    <!-- DOCTOR SUMMARY -->
+    <div class="sheet" id="docSheet">
+      <div class="card2">
+        <h3>Wellbeing summary</h3>
+        <p class="lead" id="docMeta"></p>
+        <div id="docBody"></div>
+        <div class="acts" style="margin-top:16px">
+          <button class="skip" id="docCopy">Copy</button>
+          <button class="skip" id="docDownload">Download</button>
+          <button class="save" id="docClose">Close</button>
+        </div>
+        <div class="priv"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          A wellbeing summary from a consumer device — not a medical diagnosis or a clinical measurement. Please discuss any concerns with a qualified healthcare professional.</div>
+      </div>
+    </div>
+  </main>
+
+  <div class="controls">
+    <div class="clab">Demo controls · reading</div>
+    <div class="seg" role="group" aria-label="Simulate a reading">
+      <button class="on" data-s="steady">Steady</button><button data-s="watch">Watch</button><button data-s="elevated">Elevated</button><button data-s="offline">Offline</button>
+    </div>
+    <div class="clab">Demo controls · weather</div>
+    <div class="seg" role="group" aria-label="Simulate weather">
+      <button data-wx="hot" class="on">Hot day</button><button data-wx="mild">Mild</button><button data-wx="cold">Cold</button>
+    </div>
+    <div class="live">
+      <span class="switch"><input type="checkbox" id="liveToggle" aria-label="Use live endpoint"><span class="sl"></span></span>
+      <label for="liveToggle">Connect to live endpoint (8.208.76.67)</label>
+    </div>
+    <div class="live-status" id="liveStatus"></div>
+  </div>
+
+<script>
+const ENDPOINT="http://8.208.76.67/";
+// Paste a token minted on the ECS box (same CONSENT_SECRET) to enable live guidance.
+// Until then, live calls fail closed and the app falls back to its built-in cards.
+const DEMO_CONSENT_TOKEN="PASTE_MINTED_CONSENT_TOKEN_HERE";
+const TOPIC_META={hydration:{icon:"💧",tag:"your weather"},warmth:{icon:"🧣",tag:"your weather"},
+  movement:{icon:"🚶",tag:"how you feel"},sleep:{icon:"🌙",tag:null},
+  recovery:{icon:"🫁",tag:"today"},stress:{icon:"🧘",tag:"how you feel"}};
+const BL={hr:60,hrv:45};
+const $=s=>document.querySelector(s);
+const root=document.documentElement;
+let current="steady", liveMode=false, wxMode="hot", mood=null, target={hr:62,hrv:48};
+
+const S={
+  steady:{accent:"#4f8a74",soft:"rgba(79,138,116,.13)",line:"rgba(79,138,116,.42)",word:"Steady",sub:"against your own baseline",
+    hr:62,hrNote:"typical for you",hrv:48,rec:"Strong",recNote:"above your usual",recLine:"above your usual range",spo2:98,spo2Note:"normal",temp:"Normal",tempNote:"steady overnight",steps:6240,
+    blHr:"right in your range",blRec:"a little above usual",recPct:82,
+    contrib:[["Overnight recovery (HRV)","52 ms","45 ms","+7","good","↑"],["Resting heart rate","60 bpm","60 bpm","0","even","–"],["Skin temperature","+0.1 °C","your night","","even","–"],["Sleep","7h 25m","≈ 7h","+15m","good","↑"]],
+    why:"Your resting heart rate and recovery are right in your own typical range. A <b>steady</b> day — keep doing what you're doing.",signpost:null,
+    trace:[["compute_cardiac_features","hr 62 · recovery strong","still ✓"],["analyse_movement","rest · steady gait",""],["compare_to_baseline","within your range",""],["retrieve_wellbeing_context","resting_heart_rate",""],["safety_signpost","no escalation",""]]},
+  watch:{accent:"#b0792a",soft:"rgba(176,121,42,.14)",line:"rgba(176,121,42,.42)",word:"Watch",sub:"a little outside your usual range",
+    hr:74,hrNote:"a little high",hrv:33,rec:"Low",recNote:"below your usual",recLine:"below your usual range",spo2:97,spo2Note:"normal",temp:"Warm",tempNote:"slightly up",steps:3110,
+    blHr:"a touch above usual",blRec:"below your usual",recPct:54,
+    contrib:[["Overnight recovery (HRV)","33 ms","45 ms","−12","warn","↓"],["Resting heart rate","74 bpm","60 bpm","+14","warn","↑"],["Skin temperature","+0.4 °C","your night","","warn","↑"],["Sleep","5h 50m","≈ 7h","−1h 20m","warn","↓"]],
+    why:"Your recovery is a little below your usual and your resting rate a touch above — often a poor night, dehydration, or a hard previous day. Gentle nudge: <b>water and an earlier night</b>.",
+    signpost:"This is context, not a concern on its own. If a few days run like this, ease off and rest.",
+    trace:[["compute_cardiac_features","hr 74 · recovery low","still ✓"],["analyse_movement","rest",""],["compare_to_baseline","below your range",""],["retrieve_wellbeing_context","hrv_recovery, hydration_heat",""],["safety_signpost","soft nudge",""]]},
+  elevated:{accent:"#b1553d",soft:"rgba(177,85,61,.14)",line:"rgba(177,85,61,.42)",word:"Elevated",sub:"meaningfully outside your baseline",
+    hr:88,hrNote:"high for rest",hrv:22,rec:"Low",recNote:"well below usual",recLine:"well below your usual range",spo2:96,spo2Note:"low-normal",temp:"Warm",tempNote:"above your night",steps:1240,
+    blHr:"well above usual",blRec:"well below usual",recPct:33,
+    contrib:[["Overnight recovery (HRV)","22 ms","45 ms","−23","warn","↓"],["Resting heart rate","88 bpm","60 bpm","+28","warn","↑"],["Skin temperature","+0.8 °C","your night","","warn","↑"],["Sleep","5h 05m","≈ 7h","−2h 05m","warn","↓"]],
+    why:"Several signals are meaningfully outside your own baseline right now. <b>This isn't a diagnosis</b> — but if it continues or you feel unwell, it's worth speaking with a professional.",
+    signpost:"If this reading persists, or you feel unwell, consider checking in with a healthcare professional. Edge Sentinel never diagnoses — it points you to one.",
+    trace:[["compute_cardiac_features","hr 88 · recovery low","still ✓"],["analyse_movement","rest · low activity",""],["compare_to_baseline","well below your range",""],["retrieve_wellbeing_context","when_to_seek_help",""],["safety_signpost","escalate → signpost",""]]},
+  offline:{accent:"#6b7480",soft:"rgba(107,116,128,.12)",line:"rgba(107,116,128,.38)",word:"Steady",sub:"on-device reading · offline",
+    hr:64,hrNote:"on-device",hrv:44,rec:"Steady",recNote:"on-device read",recLine:"on-device reading",spo2:98,spo2Note:"normal",temp:"Normal",tempNote:"on-device",steps:5980,
+    blHr:"in your range",blRec:"in your range",recPct:71,
+    contrib:[["Overnight recovery (HRV)","44 ms","45 ms","−1","even","–"],["Resting heart rate","64 bpm","60 bpm","+4","even","–"],["Skin temperature","+0.2 °C","your night","","even","–"],["Sleep","—","≈ 7h","","even","–"]],
+    why:"Network unavailable — showing your <b>on-device</b> reading from the local rule. The agent's fuller reasoning resumes automatically when you reconnect.",signpost:null,
+    trace:[["local_rule","on-device fallback","no network"],["compare_to_baseline","within range",""],["—","agent reasoning paused",""]]}
+};
+const TAGS={
+  "slept-well":"Nice — nights you log as good sleep have lined up with stronger recovery for you.",
+  "slept-late":"Logged. Later nights have tended to show up as lower recovery the next morning for you.",
+  "caffeine":"Noted. On days you log late caffeine, your recovery has tended to run a little lower next day.",
+  "alcohol":"Logged. Even one drink often shows up as lower overnight recovery — worth watching over time.",
+  "exercise":"Logged. A hard session can dip recovery briefly, then lift it over the next few days.",
+  "stress":"Noted. Stressful days sometimes show as lower recovery — rest tends to help it bounce back.",
+  "travel":"Logged. Travel and time-zone shifts often nudge recovery down for a day or two."
+};
+const MOODS={
+  energetic:"Great to hear. I'll keep guidance light — you're set for a fuller day.",
+  good:"Good. I'll keep an eye on your signals and only nudge if something drifts.",
+  tired:"Noted. I've moved rest and wind-down to the top of your Guidance.",
+  anxious:"Thanks for telling me. Gentle movement and breathing are near the top of your Guidance — and if it lingers, please reach out to someone.",
+  overworked:"Heard. I've put recovery and wind-down first, and eased today's step goal in spirit — rest counts.",
+  low:"Thank you for sharing that. I've put gentle movement and support first in your Guidance — and if low days persist, please talk to someone you trust."
+};
+const MOOD_SCORE={energetic:5,good:4,tired:3,anxious:2,overworked:2,low:1};
+const MOOD_EMOJI={energetic:"😃",good:"🙂",tired:"😴",anxious:"😟",overworked:"😩",low:"😔"};
+const TAG_LABEL={"slept-well":"Slept well","slept-late":"Slept late",caffeine:"Late caffeine",alcohol:"A drink",exercise:"Exercised",stress:"Stressful day",travel:"Travelled"};
+// 7-day log (index 6 = today, filled as the user taps). Aligned with recovery history for real correlations.
+let journal=[
+  {mood:"good",tags:["caffeine"]},
+  {mood:"tired",tags:["slept-late","caffeine"]},
+  {mood:"anxious",tags:["stress","slept-late"]},
+  {mood:"good",tags:["exercise","slept-well"]},
+  {mood:"energetic",tags:["slept-well","exercise"]},
+  {mood:"overworked",tags:["stress","alcohol","slept-late"]},
+  {mood:null,tags:[]}
+];
+const WX={
+  hot:{icon:"☀️",temp:"31°",place:"Almuinha da Nascente",line:"Warm and sunny today — keep water close, and add electrolytes if you're active outdoors."},
+  mild:{icon:"⛅",temp:"19°",place:"Almuinha da Nascente",line:"Comfortable out — normal hydration is fine. A good day to be outside."},
+  cold:{icon:"🌧️",temp:"6°",place:"Almuinha da Nascente",line:"Cold out — layer up before you head outside, and keep moving to stay warm."}
+};
+const CARDS={
+  hydration:{icon:"💧",title:"Hydration & electrolytes",tag:"weather",
+    body:"It's warm where you are today. In heat you lose fluid and salts through sweat — sip water regularly <i>before</i> you feel thirsty, and if you're active for a few hours, replace salt through salty snacks or a balanced electrolyte drink rather than salt tablets. Water-rich foods like melon, cucumber and oranges help too.",
+    care:"If you have heart, kidney or blood-pressure conditions, or you're on a low-sodium diet, check with your doctor before adding electrolytes.",
+    links:[["CDC · heat illness & hydration","https://www.cdc.gov/niosh/heat-stress/about/illnesses.html"],["CDC Yellow Book · heat & electrolytes","https://www.cdc.gov/yellow-book/hcp/environmental-hazards-risks/heat-and-cold-illness-in-travelers.html"]]},
+  cold:{icon:"🧣",title:"Staying warm",tag:"weather",
+    body:"It's cold out today. Layer up before heading outside and cover hands, ears and head where most heat is lost. Keep moving to keep circulation up, and warm drinks help. Ease into any hard outdoor effort — cold air can make it feel tougher.",
+    care:"If you have a heart or circulation condition, be extra cautious with sudden cold exertion, and check with your doctor.",
+    links:[["CDC · cold weather & health","https://www.cdc.gov/yellow-book/hcp/environmental-hazards-risks/heat-and-cold-illness-in-travelers.html"]]},
+  movement:{icon:"🚶",title:"Move for how you feel",tag:"for you",
+    body:"On days you feel anxious, low or overworked, gentle movement is one of the most consistently evidence-backed lifts for mood — a walk outside, light activity, whatever fits. Even short sessions count, and outdoors is a bonus.",
+    care:"If low or anxious feelings persist, please talk to a professional — movement helps, but it isn't a substitute for support.",
+    links:[["WHO · physical activity & mental health","https://www.ncbi.nlm.nih.gov/books/NBK566046/"],["Review · activity, anxiety & depression","https://pmc.ncbi.nlm.nih.gov/articles/PMC10546525/"]]},
+  sleep:{icon:"🌙",title:"Sleep & wind-down",tag:null,
+    body:"Recovery builds overnight. The simplest, strongest levers: a consistent sleep and wake time, dimming lights and screens for a couple of hours before bed, and a cool, dark room. Magnesium-rich foods in the evening — leafy greens, nuts, seeds, wholegrains — are a gentle addition.",
+    care:"Before changing any supplement, check with your doctor.",
+    links:[["Consensus · light exposure & sleep","https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.3001571"]]},
+  recovery:{icon:"🫁",title:"Let recovery rebound",tag:"today",
+    body:"Your recovery's been running below your usual. Ease off intensity for a day or two, prioritise sleep and hydration, and let it bounce back — that dip is information, not a verdict. If you were planning something hard, a lighter day now often pays off.",
+    care:"If you feel genuinely unwell rather than just tired, check in with a professional.",
+    links:[["WHO · activity, rest & recovery","https://www.ncbi.nlm.nih.gov/books/NBK566046/"]]}
+};
+
+function setVars(o){root.style.setProperty('--accent',o.accent);root.style.setProperty('--accent-soft',o.soft);root.style.setProperty('--accent-line',o.line);}
+function countTo(el,to,dur=800){const from=parseFloat(el.textContent.replace(/,/g,''))||0,t0=performance.now();
+  (function step(t){const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3),v=from+(to-from)*e;el.textContent=Math.round(v).toLocaleString();if(k<1)requestAnimationFrame(step);})(t0);}
+function barPct(val,base){return Math.max(6,Math.min(100,50+(val-base)/base*100*1.6));}
+
+function render(name,{count=true}={}){
+  const o=S[name]; current=name; setVars(o);
+  $("#stateWord").textContent=o.word; $("#stateSub").textContent=o.sub; $("#why").innerHTML=o.why;
+  if(count){countTo($("#v-hr"),o.hr);countTo($("#v-spo2"),o.spo2);countTo($("#v-steps"),o.steps);}
+  else{$("#v-hr").textContent=o.hr;$("#v-spo2").textContent=o.spo2;$("#v-steps").textContent=o.steps.toLocaleString();}
+  $("#n-hr").textContent=o.hrNote; $("#v-rec").textContent=o.rec; $("#n-rec").textContent=o.recNote;
+  $("#n-spo2").textContent=o.spo2Note; $("#v-temp").textContent=o.temp; $("#n-temp").textContent=o.tempNote;
+  const pct=Math.min(100,Math.round(o.steps/8000*100)); $("#stepRing").style.setProperty('--p',pct); $("#stepPct").textContent=pct+"%";
+  $("#bl-hr").style.width=barPct(o.hr,BL.hr)+"%"; $("#bl-rec").style.width=barPct(o.hrv,BL.hrv)+"%";
+  $("#bl-hr-t").textContent=`${o.hr} / ${BL.hr} bpm`; $("#bl-rec-t").textContent=`${o.hrv} / ${BL.hrv} ms`;
+  // recovery tab (numbers)
+  $("#recBig").textContent=o.recPct; $("#recLine").textContent=o.recLine;
+  $("#contribRows").innerHTML=o.contrib.map(c=>`<div class="row"><span class="ar ${c[4]}">${c[5]}</span><span class="cn">${c[0]}</span><span class="cr"><b>${c[1]}</b><i>vs ${c[2]}${c[3]?` · ${c[3]}`:''}</i></span></div>`).join("");
+  renderTrace(name);
+  const sp=$("#signpost"); if(o.signpost){$("#signpostText").textContent=o.signpost;sp.classList.add("show");}else sp.classList.remove("show");
+  target.hr=o.hr; target.hrv=o.hrv;
+  const en=energyFromPct(o.recPct);
+  $("#eLabel").textContent=en.label; $("#eNote").textContent=en.note; $("#eMark").style.left=o.recPct+"%";
+  $("#qWord").textContent=o.word; $("#qLine").textContent=quietLine(name);
+  renderGuidance();
+}
+
+/* weather → under the hood: drives guidance + shows as a tool call in the agent trace, not a visible widget */
+function weatherTraceLine(name){
+  if(name==="offline")return ["retrieve_local_context","weather cached · offline",""];
+  if(wxMode==="hot")return ["retrieve_local_context","weather 31° · hot","→ hydration"];
+  if(wxMode==="cold")return ["retrieve_local_context","weather 6° · cold","→ warmth"];
+  return ["retrieve_local_context","weather 19° · mild",""];
+}
+function renderTrace(name){
+  const o=S[name], base=o.trace.map(r=>r.slice());
+  let idx=base.findIndex(r=>r[0].startsWith("retrieve_wellbeing")); if(idx<0)idx=base.length-1;
+  base.splice(idx,0,weatherTraceLine(name));
+  $("#traceBody").innerHTML=base.map((r,i)=>{const br=i===base.length-1?"└":"├";const nm=r[0].padEnd(26,' ');
+    return `<span class="d">${br}</span> <span class="t">${nm}</span><span class="k">${r[1]}</span>`+(r[2]?`  <span class="d">${r[2]}</span>`:``);}).join("\n");
+}
+
+/* guidance — agent selects vetted cards; leads with a correlation insight from the user's own logs */
+function renderGuidance(){
+  let order=[];
+  if(wxMode==="hot")order.push("hydration"); else if(wxMode==="cold")order.push("cold");
+  if(mood==="anxious"||mood==="low"||mood==="overworked")order.push("movement");
+  if(current==="watch"||current==="elevated")order.push("recovery");
+  order.push("sleep");
+  if(!order.includes("movement"))order.push("movement");
+  order=[...new Set(order)].slice(0,4);
+  const insight=insightCard();
+  const cards=order.map((id,i)=>{const c=CARDS[id];const pri=!insight&&i===0;
+    const tag=c.tag?`<span class="gtag">${c.tag==="weather"?"your weather":c.tag==="for you"?"how you feel":c.tag}</span>`:"";
+    const links=c.links.map(l=>`<a href="${l[1]}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M10 14L20 4M15 4h5v5"/><path d="M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6"/></svg>${l[0]}</a>`).join("");
+    return `<div class="gcard${pri?' pri':''}"><div class="gh"><span class="gi">${c.icon}</span><span class="gt">${c.title}</span>${tag}</div><p>${c.body}</p><div class="care"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>${c.care}</div><div class="links">${links}</div></div>`;
+  }).join("");
+  $("#guidanceList").innerHTML=insight+cards;
+  if(liveMode) applyLiveGuidance(insight);
+}
+
+/* live guidance — the Sentinel Agent writes the prose at request time, card-grounded
+   and dose-scrubbed. Best-effort: on any failure we silently keep the built-in cards. */
+async function fetchLiveGuidance(){
+  try{
+    const ctx={weather:wxMode, moods:mood?[mood]:[],
+      tags:(journal[6].tags||[]).map(t=>(TAG_LABEL[t]||t).toLowerCase()),
+      recovery_pct:(TR.rec?TR.rec[6]:null)};
+    const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),4500);
+    const r=await fetch(ENDPOINT+"guidance",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({consent_token:DEMO_CONSENT_TOKEN,context:ctx}),signal:ctrl.signal});
+    clearTimeout(to);
+    if(!r.ok)return null;
+    return await r.json();
+  }catch(e){return null;}
+}
+function gLinks(links){return (links||[]).map(l=>`<a href="${l[1]}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M10 14L20 4M15 4h5v5"/><path d="M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6"/></svg>${l[0]}</a>`).join("");}
+async function applyLiveGuidance(insightHtml){
+  const g=await fetchLiveGuidance();
+  if(!g||!g.cards||!g.cards.length)return;   // fall back to built-in, silently
+  const ribbon=`<div class="liveribbon"><b>✍ Written live by the Sentinel Agent</b> · grounded in the knowledge base · dose-free${g.scrubbed?" · safety-scrubbed":""}</div>`;
+  const lead=g.lead?`<div class="glead">${g.lead}</div>`:"";
+  const cards=g.cards.map(c=>{const m=TOPIC_META[c.topic]||{icon:"·",tag:null};
+    const tag=m.tag?`<span class="gtag">${m.tag}</span>`:"";
+    const care=c.care?`<div class="care"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>${c.care}</div>`:"";
+    return `<div class="gcard"><div class="gh"><span class="gi">${m.icon}</span><span class="gt">${c.title}</span>${tag}</div><p>${c.guidance}</p>${care}<div class="links">${gLinks(c.links)}</div></div>`;
+  }).join("");
+  $("#guidanceList").innerHTML=insightHtml+ribbon+lead+cards;
+}
+
+/* correlate logged behaviours with recovery history */
+function computeInsight(){
+  const counts={}; journal.forEach(e=>e.tags.forEach(t=>counts[t]=(counts[t]||0)+1));
+  const logged=i=>journal[i].tags.length||journal[i].mood;
+  let worst=null,best=null;
+  Object.keys(counts).forEach(t=>{ if(counts[t]<2)return;
+    const withI=journal.map((e,i)=>e.tags.includes(t)?i:-1).filter(i=>i>=0);
+    const woI=journal.map((e,i)=>(!e.tags.includes(t)&&logged(i))?i:-1).filter(i=>i>=0);
+    if(!withI.length||!woI.length)return;
+    const aw=Math.round(withI.reduce((s,i)=>s+TR.rec[i],0)/withI.length);
+    const ao=Math.round(woI.reduce((s,i)=>s+TR.rec[i],0)/woI.length);
+    const rec={t,n:withI.length,aw,ao,delta:aw-ao};
+    if(rec.delta<0&&(!worst||rec.delta<worst.delta))worst=rec;
+    if(rec.delta>0&&(!best||rec.delta>best.delta))best=rec;
+  });
+  return {worst,best};
+}
+function insightCard(){
+  const {worst,best}=computeInsight(); if(!worst&&!best)return "";
+  let body="";
+  if(worst)body+=`<p>Over the last week, on the <b>${worst.n}</b> ${worst.n===1?'day':'days'} you logged <b>${TAG_LABEL[worst.t].toLowerCase()}</b> your recovery averaged <b>${worst.aw}%</b> — versus <b>${worst.ao}%</b> on your other days. Worth experimenting with over the week ahead.</p>`;
+  if(best)body+=`<p class="pos">On the brighter side, days you logged <b>${TAG_LABEL[best.t].toLowerCase()}</b> averaged <b>${best.aw}%</b> — your stronger days. More of that.</p>`;
+  const linkCard=(worst&&worst.t==="stress")?CARDS.movement:CARDS.sleep;
+  const links=linkCard.links.map(l=>`<a href="${l[1]}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M10 14L20 4M15 4h5v5"/><path d="M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6"/></svg>${l[0]}</a>`).join("");
+  return `<div class="gcard pri"><div class="gh"><span class="gi">📊</span><span class="gt">What's affecting you</span><span class="gtag">from your logs</span></div>${body}<div class="links">${links}</div></div>`;
+}
+
+/* logged trends */
+function renderMoodTrend(){
+  $("#tr-mood").innerHTML=journal.map((e,i)=>{
+    if(!e.mood)return `<div class="col"><div class="bar" style="height:8%;background:var(--surface-2)"><span class="bv">·</span></div><div class="dl">${DAYS[i]}</div></div>`;
+    const sc=MOOD_SCORE[e.mood],h=Math.max(16,sc/5*100),t=sc>=4?'good':sc===3?'mid':'poor';
+    return `<div class="col"><div class="bar" style="height:${h}%;background:${TIER[t]}"><span class="bv" style="top:-17px;font-size:13px">${MOOD_EMOJI[e.mood]}</span></div><div class="dl">${DAYS[i]}</div></div>`;
+  }).join("");
+}
+function renderTagsTrend(){
+  const counts={}; journal.forEach(e=>e.tags.forEach(t=>counts[t]=(counts[t]||0)+1));
+  const arr=Object.entries(counts).sort((a,b)=>b[1]-a[1]); const el=$("#tr-tags");
+  if(!arr.length){el.innerHTML=`<p class="emptylog">Nothing logged yet this week. Tag your day on the Today tab and it builds here.</p>`;return;}
+  const max=arr[0][1];
+  el.innerHTML=arr.map(([t,c])=>`<div class="tagrow"><span class="tn">${TAG_LABEL[t]||t}</span><span class="tbar"><i style="width:${c/max*100}%"></i></span><span class="tc">×${c}</span></div>`).join("");
+}
+
+/* today's energy / pacing */
+function energyFromPct(p){
+  if(p>=75)return{label:"Full day",note:"You've recovered well — green light for a fuller day. Still, listen to your body."};
+  if(p>=55)return{label:"Moderate",note:"Steady energy today. Pace yourself and take breaks — you don't have to push."};
+  return{label:"Lighter day",note:"Your reserves are low. A lighter day now protects tomorrow — rest is productive."};
+}
+/* quiet mode reassurance */
+function quietLine(name){return {
+  steady:"You're steady. Nothing needs your attention right now. Breathe.",
+  watch:"A gentle watch today. Be kind to yourself, and rest a little.",
+  elevated:"Your body's asking for care. If you feel unwell, reach out to someone.",
+  offline:"Resting quietly, on your device. All is calm."
+}[name];}
+/* bring-to-your-doctor summary */
+let docText="";
+function buildDoc(){
+  const o=S[current];
+  const recAvg=avg(TR.rec), hrAvg=avg(TR.hr), slAvg=Math.round(SLEEP.reduce((x,s)=>x+s.d+s.l+s.r,0)/SLEEP.length);
+  const {worst}=computeInsight();
+  const rows=[
+    ["Recovery (7-day average)", recAvg+"%"],
+    ["Resting heart rate (7-day avg)", hrAvg+" bpm · baseline "+BL.hr],
+    ["Heart-rate variability (today)", o.hrv+" ms · baseline "+BL.hrv],
+    ["Sleep (7-night average)", hmLong(slAvg)],
+    ["Today's reading", o.word+" · recovery "+o.recPct+"%"]
+  ];
+  if(worst)rows.push(["Notable pattern", `recovery averaged ${worst.aw}% on the ${worst.n} ${worst.n===1?'day':'days'} “${TAG_LABEL[worst.t].toLowerCase()}” was logged, vs ${worst.ao}% otherwise`]);
+  const date=new Date().toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'});
+  $("#docMeta").textContent=`Prepared by Aevum Edge Sentinel · ${date} · everything is compared to your own baseline`;
+  $("#docBody").innerHTML=rows.map(r=>`<div class="sumrow"><span class="snm2">${r[0]}</span><span class="sv2">${r[1]}</span></div>`).join("");
+  docText="AEVUM EDGE SENTINEL — WELLBEING SUMMARY\n"+`Prepared ${date} · compared to your own baseline\n\n`+
+    rows.map(r=>`• ${r[0]}: ${r[1]}`).join("\n")+
+    "\n\nThis is a wellbeing summary from a consumer device. It is not a medical diagnosis or a clinical measurement. Please discuss any concerns with a qualified healthcare professional.";
+}
+const FULLDAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+function openSleepDetail(i){
+  const s=SLEEP[i], total=s.d+s.l+s.r+s.a, asleep=s.d+s.l+s.r;
+  const stages=[["Deep",s.d,SL_COL.d],["Light",s.l,SL_COL.l],["REM",s.r,SL_COL.r],["Awake",s.a,SL_COL.a]];
+  $("#slTitle").textContent=(i===6?"Last night":FULLDAYS[i]+" night");
+  $("#slLead").textContent=`${hmLong(asleep)} asleep · ${hmLong(total)} in bed`;
+  $("#slHyp").innerHTML=stages.map(([n,v,c])=>`<i style="width:${v/total*100}%;background:${c}"></i>`).join("");
+  $("#slRows").innerHTML=stages.map(([n,v,c])=>`<div class="srow"><span class="sk" style="background:${c}"></span><span class="snm">${n}</span><span class="smin">${hmLong(v)}</span><span class="spc">${Math.round(v/total*100)}%</span></div>`).join("");
+  $("#sleepSheet").classList.add('show');
+}
+
+/* persistence — survives a reload (localStorage where available, in-memory otherwise) */
+function saveJournal(){try{localStorage.setItem('aevum_journal',JSON.stringify(journal));}catch(e){}}
+function loadJournal(){try{const s=localStorage.getItem('aevum_journal');if(s){const j=JSON.parse(s);if(Array.isArray(j)&&j.length===7)journal=j;}}catch(e){}}
+function applyTodayFromJournal(){
+  const t=journal[6]; mood=t.mood||null;
+  document.querySelectorAll('#faces button').forEach(b=>b.classList.toggle('on',b.dataset.mood===mood));
+  document.querySelectorAll('#chips button').forEach(b=>b.classList.toggle('on',t.tags.includes(b.dataset.tag)));
+  const jn=$("#jnote");
+  if(t.tags.length)jn.innerHTML='<span class="agent">Sentinel Agent</span>'+TAGS[t.tags[t.tags.length-1]];
+  else if(mood)jn.innerHTML='<span class="agent">Sentinel Agent</span>'+MOODS[mood];
+}
+
+/* mood */
+document.querySelectorAll('#faces button').forEach(b=>b.addEventListener('click',()=>{
+  const was=b.classList.contains('on');
+  document.querySelectorAll('#faces button').forEach(x=>x.classList.remove('on'));
+  const jn=$("#jnote");
+  if(was){mood=null; jn.innerHTML='<span class="agent">Sentinel Agent</span>Tag your day and how you feel — over time I\'ll show what actually moves your recovery, and tune your guidance to it.';}
+  else{b.classList.add('on'); mood=b.dataset.mood; jn.innerHTML='<span class="agent">Sentinel Agent</span>'+MOODS[mood];}
+  journal[6].mood=mood; saveJournal(); renderMoodTrend(); renderGuidance();
+}));
+
+/* behaviour tags */
+document.querySelectorAll('#chips button').forEach(b=>b.addEventListener('click',()=>{
+  b.classList.toggle('on'); const on=b.classList.contains('on'),jn=$("#jnote");
+  if(on)jn.innerHTML='<span class="agent">Sentinel Agent</span>'+TAGS[b.dataset.tag];
+  else{const s=document.querySelector('#chips button.on');
+    if(s)jn.innerHTML='<span class="agent">Sentinel Agent</span>'+TAGS[s.dataset.tag];
+    else if(mood)jn.innerHTML='<span class="agent">Sentinel Agent</span>'+MOODS[mood];
+    else jn.innerHTML='<span class="agent">Sentinel Agent</span>Tag your day and how you feel — over time I\'ll show what actually moves your recovery, and tune your guidance to it.';}
+  journal[6].tags=[...document.querySelectorAll('#chips button.on')].map(x=>x.dataset.tag);
+  saveJournal(); renderTagsTrend(); renderGuidance();
+}));
+
+/* tabs */
+document.querySelectorAll('.tabbar button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tabbar button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.dataset.panel===b.dataset.go));
+  $("#screen").scrollTo({top:0,behavior:'smooth'});
+}));
+
+/* trends */
+const TR={rec:[72,64,58,76,81,55,68],hr:[60,62,64,59,58,66,61],st:[6200,4800,7100,8300,5200,3100,6240]};
+const SLEEP=[  /* minutes per night: deep / light / rem / awake */
+  {d:70,l:230,r:95,a:20},{d:58,l:210,r:82,a:30},{d:50,l:195,r:70,a:40},{d:78,l:240,r:100,a:18},
+  {d:85,l:250,r:105,a:15},{d:45,l:185,r:65,a:45},{d:68,l:225,r:90,a:22}
+];
+const SL_COL={d:"#34655c",l:"#7aa996",r:"#9b8bc4",a:"#e0d3b6"};
+function hm(m){const h=Math.floor(m/60),mm=m%60;return h+'h'+(mm<10?'0'+mm:mm);}
+function hmLong(m){const h=Math.floor(m/60),mm=m%60;return h+'h '+(mm<10?'0'+mm:mm)+'m';}
+function drawSleep(el){
+  const tot=SLEEP.map(s=>s.d+s.l+s.r+s.a), maxT=Math.max(...tot);
+  const seg=(v,total,c)=>`<div class="sseg" style="height:${v/total*100}%;background:${c}"></div>`;
+  el.innerHTML=SLEEP.map((s,i)=>{const total=tot[i], asleep=s.d+s.l+s.r, barH=Math.max(12,total/maxT*100);
+    return `<div class="scol" data-i="${i}" role="button" tabindex="0"><div class="sbar" style="height:${barH}%"><div class="sfill">${seg(s.d,total,SL_COL.d)}${seg(s.l,total,SL_COL.l)}${seg(s.r,total,SL_COL.r)}${seg(s.a,total,SL_COL.a)}</div><span class="sbv">${hm(asleep)}</span></div><div class="dl">${DAYS[i]}</div></div>`;
+  }).join("");
+}
+const DAYS=["M","T","W","T","F","S","S"];
+const TIER={good:"#4f8a74",mid:"#b0792a",poor:"#b1553d"};   // same as steady / watch / elevated
+function drawTrend(el,arr,{lo,hi,band,fmt},cls){
+  const span=(hi-lo)||1;
+  el.innerHTML=`<div class="bl" style="bottom:${((band-lo)/span*100)}%"></div>`+arr.map((v,i)=>{
+    const h=Math.max(8,((v-lo)/span)*100);
+    return `<div class="col"><div class="bar" style="height:${h}%;background:${TIER[cls(v)]}"><span class="bv">${fmt(v)}</span></div><div class="dl">${DAYS[i]}</div></div>`;}).join("");
+}
+function avg(a){return Math.round(a.reduce((x,y)=>x+y,0)/a.length);}
+function initTrends(){
+  drawTrend($("#tr-rec"),TR.rec,{lo:40,hi:100,band:60,fmt:v=>v}, v=> v>=68?'good': v>=58?'mid':'poor');              // higher = better
+  drawTrend($("#tr-hr"),TR.hr,{lo:52,hi:72,band:60,fmt:v=>v},   v=> v<=61?'good': v<=64?'mid':'poor');                // lower = better
+  drawTrend($("#tr-st"),TR.st,{lo:0,hi:9000,band:8000,fmt:v=>(v/1000).toFixed(1)+'k'}, v=> v>=6000?'good': v>=4000?'mid':'poor');  // higher = better
+  drawSleep($("#tr-sleep"));
+  $("#tr-rec-avg").textContent=avg(TR.rec)+"%"; $("#tr-hr-avg").textContent=avg(TR.hr)+" bpm"; $("#tr-st-avg").textContent=avg(TR.st).toLocaleString();
+  $("#tr-sl-avg").textContent=hmLong(Math.round(SLEEP.reduce((x,s)=>x+s.d+s.l+s.r,0)/SLEEP.length));
+  renderMoodTrend(); renderTagsTrend();
+}
+
+/* live chart */
+const cv=$("#spark"),cx=cv.getContext('2d');
+const BAND={hr:[52,72],hrv:[36,58]},BASE={hr:60,hrv:45};
+let sig="hr",series={hr:[],hrv:[]};const CAP=60;
+function seed(){series={hr:[],hrv:[]};for(let i=0;i<CAP;i++){series.hr.push(62+Math.sin(i/6)*2+(Math.random()-.5)*2);series.hrv.push(48+Math.cos(i/7)*3+(Math.random()-.5)*3);}}
+function pushPoint(){for(const k of['hr','hrv']){const last=series[k][series[k].length-1]??target[k];const next=last+(target[k]-last)*0.12+(Math.random()-.5)*(k==='hr'?1.4:2.2);series[k].push(next);if(series[k].length>CAP)series[k].shift();}draw();}
+function draw(){
+  const w=cv.width,h=cv.height,data=series[sig],band=BAND[sig],base=BASE[sig];
+  const accent=getComputedStyle(root).getPropertyValue('--accent').trim();
+  const lo=Math.min(band[0],...data)-3,hi=Math.max(band[1],...data)+3,span=hi-lo||1;
+  const Y=v=>h-((v-lo)/span)*h,X=i=>(i/(CAP-1))*w;
+  cx.clearRect(0,0,w,h);
+  cx.fillStyle=accent+'20';cx.fillRect(0,Y(band[1]),w,Y(band[0])-Y(band[1]));
+  cx.setLineDash([4,5]);cx.lineWidth=1;cx.strokeStyle='rgba(120,110,95,.5)';
+  [band[0],band[1]].forEach(v=>{cx.beginPath();cx.moveTo(0,Y(v));cx.lineTo(w,Y(v));cx.stroke();});
+  cx.setLineDash([]);cx.strokeStyle='#9a8f79';cx.lineWidth=1;cx.beginPath();cx.moveTo(0,Y(base));cx.lineTo(w,Y(base));cx.stroke();
+  cx.strokeStyle=accent;cx.lineWidth=2.4;cx.lineJoin='round';cx.beginPath();
+  data.forEach((v,i)=>{i?cx.lineTo(X(i),Y(v)):cx.moveTo(X(i),Y(v));});cx.stroke();
+  const lx=X(data.length-1),ly=Y(data[data.length-1]);
+  const g=cx.createLinearGradient(0,0,0,h);g.addColorStop(0,accent+'2e');g.addColorStop(1,accent+'00');
+  cx.lineTo(lx,h);cx.lineTo(0,h);cx.closePath();cx.fillStyle=g;cx.fill();
+  cx.beginPath();cx.arc(lx,ly,3.5,0,7);cx.fillStyle=accent;cx.fill();
+  cx.beginPath();cx.arc(lx,ly,7,0,7);cx.strokeStyle=accent+'55';cx.lineWidth=1.5;cx.stroke();
+  const cur=data[data.length-1];
+  $("#chNow").textContent=cur<band[0]?'below your range':cur>band[1]?'above your range':'in your normal range';
+}
+document.querySelectorAll('.chart .tabs button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.chart .tabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');sig=b.dataset.sig;draw();
+}));
+
+/* demo controls */
+document.querySelectorAll('.seg [data-s]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.seg [data-s]').forEach(x=>x.classList.remove('on'));b.classList.add('on');render(b.dataset.s);
+  if(b.dataset.s==="offline"){$("#connLabel").textContent="Offline";$("#connDot").className="dot demo";}
+  else if(!liveMode){$("#connLabel").textContent="Demo";$("#connDot").className="dot demo";}
+}));
+document.querySelectorAll('.seg [data-wx]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.seg [data-wx]').forEach(x=>x.classList.remove('on'));b.classList.add('on');wxMode=b.dataset.wx;renderTrace(current);renderGuidance();
+}));
+
+/* onboarding */
+const sheet=$("#sheet");
+function openSheet(){sheet.classList.add('show');}
+function closeSheet(){sheet.classList.remove('show');}
+$("#profileBtn").addEventListener('click',openSheet);
+$("#obSkip").addEventListener('click',closeSheet);
+$("#obSave").addEventListener('click',()=>{const age=document.querySelector('#ob-age .on');if(age)$("#profileBtn").textContent=age.dataset.v.slice(0,2);closeSheet();});
+document.querySelectorAll('#ob-age button,#ob-sex button').forEach(b=>b.addEventListener('click',()=>{
+  b.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');}));
+
+function tick(){$("#clock").textContent=new Date().toTimeString().slice(0,5);}tick();setInterval(tick,10000);
+
+$("#liveToggle").addEventListener('change',async e=>{const st=$("#liveStatus");
+  if(e.target.checked){liveMode=true;$("#connLabel").textContent="Live";$("#connDot").className="dot";st.innerHTML="pinging "+ENDPOINT+" …";
+    try{const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),4000);
+      const r=await fetch(ENDPOINT,{signal:ctrl.signal});clearTimeout(to);const j=await r.json();
+      st.innerHTML=`<b>● live</b> · model ${j.model} · mode ${j.mode} · uptime ${Math.round(j.uptime_s)}s · diagnosis-free ${j.diagnosis_free}`;
+    }catch(err){st.innerHTML=`couldn't reach the endpoint from this page — browsers block http calls from an https page.<br>the live backend is real: open <b>${ENDPOINT}</b> directly. demo readings shown.`;
+      $("#connLabel").textContent="Demo";$("#connDot").className="dot demo";}
+  }else{liveMode=false;st.textContent="";$("#connLabel").textContent=current==="offline"?"Offline":"Demo";$("#connDot").className="dot demo";}
+  renderGuidance();
+});
+
+$("#tr-sleep").addEventListener('click',e=>{const c=e.target.closest('.scol'); if(c)openSleepDetail(+c.dataset.i);});
+$("#tr-sleep").addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const c=e.target.closest('.scol'); if(c){e.preventDefault();openSleepDetail(+c.dataset.i);}}});
+$("#slClose").addEventListener('click',()=>$("#sleepSheet").classList.remove('show'));
+$("#sleepSheet").addEventListener('click',e=>{if(e.target.id==='sleepSheet')$("#sleepSheet").classList.remove('show');});
+
+/* quiet mode — on/off toggle */
+function setQuiet(on){$("#quietview").classList.toggle('show',on);$("#quietBtn").classList.toggle('on',on);}
+$("#quietBtn").addEventListener('click',()=>setQuiet(!$("#quietview").classList.contains('show')));
+$("#quietOff").addEventListener('click',()=>setQuiet(false));
+$("#quietExit").addEventListener('click',()=>setQuiet(false));
+
+/* doctor summary */
+$("#docBtn").addEventListener('click',()=>{buildDoc();$("#docSheet").classList.add('show');});
+$("#docClose").addEventListener('click',()=>$("#docSheet").classList.remove('show'));
+$("#docSheet").addEventListener('click',e=>{if(e.target.id==='docSheet')$("#docSheet").classList.remove('show');});
+$("#docCopy").addEventListener('click',()=>{const b=$("#docCopy");
+  const done=()=>{b.textContent="Copied ✓";setTimeout(()=>b.textContent="Copy",1600);};
+  try{navigator.clipboard.writeText(docText).then(done,done);}catch(e){done();}});
+$("#docDownload").addEventListener('click',()=>{try{
+  const blob=new Blob([docText],{type:'text/plain'});const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='aevum-wellbeing-summary.txt';document.body.appendChild(a);a.click();a.remove();
+}catch(e){}});
+
+seed();setInterval(pushPoint,900);
+loadJournal();
+initTrends();
+applyTodayFromJournal();
+render("steady",{count:false});setTimeout(()=>{render("steady");draw();},120);
+</script>
+</body>
+</html>
