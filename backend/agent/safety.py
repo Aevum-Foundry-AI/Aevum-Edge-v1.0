@@ -106,3 +106,34 @@ def scrub(obj: dict) -> tuple[dict, bool]:
         if cq and _hits(str(cq)):
             clean["clarify_question"] = None
     return clean, scrubbed
+
+
+# --- dose / quantity guard (guidance path) -------------------------------------
+# The guidance voice gives foods and habits, never amounts. Any number followed by
+# a dose unit is drift toward prescription and is neutralised.
+_DOSE = re.compile(
+    r"\b\d+(?:[.,]\d+)?\s?(?:mg|mcg|µg|ug|g|kg|iu|ml|l|litres?|liters?|oz|ounces?|units?|"
+    r"tablets?|capsules?|servings?|grams?|milligrams?|micrograms?)\b",
+    re.I,
+)
+
+
+def strip_doses(text: str) -> tuple[str, bool]:
+    """Replace any explicit dose/quantity with a neutral phrase."""
+    new = _DOSE.sub("a sensible amount", text)
+    return new, (new != text)
+
+
+def clean_guidance(text: str, fallback: str = "") -> tuple[str, bool]:
+    """Neutralise diagnostic drift and strip any dose from a guidance sentence.
+
+    Returns (clean_text, was_scrubbed). Condition/diagnosis drift falls back to
+    vetted card text; a dose is stripped in place.
+    """
+    scrubbed = False
+    text = str(text or "")
+    if _hits(text):
+        text = fallback or _SAFE_FALLBACK["suggestion"]
+        scrubbed = True
+    text, d = strip_doses(text)
+    return text, (scrubbed or d)

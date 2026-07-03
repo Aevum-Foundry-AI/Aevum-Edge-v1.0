@@ -17,7 +17,7 @@ from __future__ import annotations
 import math
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 _KB_DIR = os.environ.get("KB_DIR", os.path.join(os.path.dirname(__file__), "..", "kb", "wellbeing"))
 _TOKEN = re.compile(r"[a-z0-9]+")
@@ -33,6 +33,8 @@ class Card:
     text: str
     source: str
     tokens: list[str]
+    links: list = field(default_factory=list)  # list of [label, url]
+    care: str = ""
 
 
 class KnowledgeBase:
@@ -73,19 +75,34 @@ def _parse_card(path: str) -> Card:
     with open(path) as f:
         raw = f.read()
     title, source = os.path.basename(path), "general wellbeing guidance"
+    links: list = []
+    care = ""
     body = raw
-    # optional front-matter: lines "title:" / "source:" before a blank line
-    m = re.match(r"^(?:(title|source):.*\n)+\n", raw, re.IGNORECASE)
+    # optional front-matter: title/source/links/care lines before a blank line
+    m = re.match(r"^(?:(title|source|links|care):.*\n)+\n", raw, re.IGNORECASE)
     if m:
         head, body = raw[: m.end()], raw[m.end():]
         for line in head.splitlines():
-            if ":" in line:
-                key, val = line.split(":", 1)
-                if key.strip().lower() == "title":
-                    title = val.strip()
-                elif key.strip().lower() == "source":
-                    source = val.strip()
-    return Card(title=title, text=body.strip(), source=source, tokens=_tok(title + " " + body))
+            if ":" not in line:
+                continue
+            key, val = line.split(":", 1)
+            key, val = key.strip().lower(), val.strip()
+            if key == "title":
+                title = val
+            elif key == "source":
+                source = val
+            elif key == "care":
+                care = val
+            elif key == "links":
+                # entries: "Label | https://url ;; Label2 | https://url2"
+                for entry in val.split(";;"):
+                    entry = entry.strip()
+                    if "|" in entry:
+                        label, url = entry.split("|", 1)
+                        if url.strip().startswith("http"):
+                            links.append([label.strip(), url.strip()])
+    return Card(title=title, text=body.strip(), source=source,
+                tokens=_tok(title + " " + body), links=links, care=care)
 
 
 def load_kb(kb_dir: str = _KB_DIR) -> KnowledgeBase:
@@ -104,4 +121,5 @@ def retrieve(query: str, k: int = 3) -> list[dict]:
     global _KB
     if _KB is None:
         _KB = load_kb()
-    return [{"title": c.title, "text": c.text, "source": c.source} for c in _KB.retrieve(query, k)]
+    return [{"title": c.title, "text": c.text, "source": c.source,
+             "links": c.links, "care": c.care} for c in _KB.retrieve(query, k)]

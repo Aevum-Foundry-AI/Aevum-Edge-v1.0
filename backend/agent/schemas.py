@@ -67,6 +67,16 @@ class ToolCall(BaseModel):
     result_summary: str = ""
 
 
+class GuidanceRequest(BaseModel):
+    """Request for card-grounded wellbeing guidance. Context is a light bag of
+    situation signals — weather, recent logged moods/tags, today's recovery."""
+    consent_token: str = Field(..., description="fail-closed: no valid token, no guidance")
+    context: dict = Field(
+        default_factory=dict,
+        description="e.g. {'weather':'hot','moods':['anxious'],'tags':['slept late'],'recovery_pct':54}",
+    )
+
+
 class InterpretResponse(BaseModel):
     flag: Flag
     headline: str
