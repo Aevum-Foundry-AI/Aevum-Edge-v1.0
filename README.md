@@ -87,6 +87,12 @@ The wearable is screenless; a companion phone app handles personalisation and th
 **Onboarding & profile** (one-time, editable) — height, weight, age range; activity frequency, type and intensity; diet type, patterns and hydration; any physical or mental health context you *choose* to share (per-category consent); and your goals (move more, sleep, stress, routine, understanding your own signals). This builds your **personal baseline + context**, so interpretations are tuned to *you* rather than to an average.
  
 **What the app shows** — your flag (steady / watch / elevated vs baseline); a plain-language explanation that cites your own numbers; general recommendations across food, movement and rest; your daily step count; a signpost to *"consider seeing a professional if this continues or you feel unwell"*; and optional product links with a clear affiliate disclosure. It never names or infers a condition, and never treats a declared one.
+
+## 🔗 Live
+
+- **Companion app:** https://aevum-edge-sentinel.netlify.app
+- **Agent API (live):** http://8.208.76.67/ — returns live Qwen status
+- **Qwen base URL (code proof):** [backend/agent/client.py](backend/agent/client.py)
  
 ---
  
