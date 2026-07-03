@@ -18,9 +18,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from agent.client import DEFAULT_MODEL
 from agent.consent import ConsentError, validate_consent
+from agent.guidance import guidance as run_guidance
 from agent.memory import make_store
 from agent.orchestrator import run_agent
-from agent.schemas import Baseline, FeatureVector, InterpretRequest, InterpretResponse
+from agent.schemas import Baseline, FeatureVector, GuidanceRequest, InterpretRequest, InterpretResponse
 
 app = FastAPI(title="Aevum Edge Sentinel", version="1.0",
               description="Privacy-first, diagnosis-free wellbeing reasoning at the edge.")
@@ -65,3 +66,18 @@ def interpret(req: InterpretRequest):
 def seed_baseline(device_token: str, features: FeatureVector):
     """Dev helper: advance a user's baseline from a feature vector."""
     return STORE.update(device_token, features)
+
+
+@app.post("/guidance")
+def guidance(req: GuidanceRequest):
+    """Card-grounded, dose-free, citation-locked wellbeing guidance.
+
+    The agent writes the connective prose, but may only draw on cards retrieved
+    from the knowledge base; links are re-attached from those cards, and a
+    dose/condition scrubber runs before anything is returned. Consent fail-closed.
+    """
+    try:
+        validate_consent(req.consent_token)
+    except ConsentError as exc:
+        raise HTTPException(status_code=403, detail=f"consent invalid: {exc}")
+    return run_guidance(req.context)
