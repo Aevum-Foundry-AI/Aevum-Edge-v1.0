@@ -8,7 +8,7 @@
 Aevum Edge is a screenless, wrist-worn wellbeing-sensing node. Low-cost sensors read your body and your surroundings; the device extracts features **on-device**, and a **Qwen agent** running on Alibaba Cloud interprets them against *your own baseline* to return a gentle, explainable wellbeing nudge. Raw sensor data never leaves the wrist, consent is enforced fail-closed, and the system keeps working, on a simpler local rule, when the network drops.
  
 It deliberately **never diagnoses**. It tells you whether your signals are **steady**, worth a **watch**, or **elevated** versus your baseline, explains why in plain language, and, if something is persistently off, signposts you to a real professional. It never names or infers a condition, and never tries to treat one you've declared.
- 
+
 Underneath the engineering is a simpler idea: a good wellbeing device gives you a way to be understood when you cannot find the words. That matters for anyone on a hard day, and most of all for children and teens with **SEND** (Special Educational Needs and Disabilities). Read with a trusted adult, with consent, the same three states become the child's own signpost, a live feelings card a teacher can read to adapt the lesson and the day. See [the trusted-adult view](#the-trusted-adult-view-the-send-signpost) below.
  
 ---
@@ -44,8 +44,7 @@ features ─▶ consent gate (fail-closed) ─▶ baseline / memory ─▶ Qwen 
 - **`retrieve_wellbeing_context`**: retrieval over a licence-clean wellbeing knowledge base, so advice is grounded, not invented.
 - **`safety_signpost`**: decides whether to prompt you to see a professional (escalation, never a diagnosis).
 Two governing guards wrap the loop: **fail-closed consent** (no valid token, no processing) and a **diagnosis-free scrubber** that neutralises any output drifting toward naming or inferring a condition.
-Beyond the sensors, a reading can carry a little situational context: the weather where you are, any moods or notes you have logged, how recovered you feel today. The agent folds that into the guidance it grounds from the knowledge base, so the same body signals read differently on a warm day than a cold one, hydration and electrolytes when it is hot, keeping warm and moving when it is not. It is context, not a diagnosis, used the way a thoughtful friend would use it.
- 
+
 **Measured, not asserted** (run `backend/prove/metrics.py`):
  
 - **~33× data minimisation**: a raw PPG + motion window is ~8 KB; the derived payload that actually leaves the wrist is ~240 bytes.
@@ -92,24 +91,25 @@ The wearable is screenless; a companion phone app handles personalisation and th
 **What the app shows**: your flag (steady / watch / elevated vs baseline); a plain-language explanation that cites your own numbers; general recommendations across food, movement and rest; your daily step count; a signpost to *"consider seeing a professional if this continues or you feel unwell"*; and optional product links with a clear affiliate disclosure. It never names or infers a condition, and never treats a declared one.
  
 ---
- 
+
 ## The trusted-adult view: the SEND signpost
- 
+
 Aevum Edge is a wellbeing wearable for anyone, and its sharpest use is giving a voice to the children and teens who most need one: those with SEND who cannot always find the words for how they feel.
- 
+
 Designed to sit inside the classroom learning app, the child's wrist becomes a live **feelings card** for the trusted adult in the room. The same three states, read against the child's own baseline and translated per child, tell the teacher how that child is arriving today, so they can adapt the lesson, the demands, and their own approach before the day tips rather than after. The child never has to announce that they are struggling.
- 
+
 The same state means different things for different children, so the Qwen agent turns one signal per child into the response agreed in advance with them and their family:
- 
+
 - **Steady:** a settled, regulated day. Meet them as usual; a full-demand lesson is fine.
 - **Watch:** something is shifting. Soften the pace; a gentle check-in and a familiar routine can steady the day before it tips.
 - **Elevated:** running high, or close to overload. Lower the demands, shorten the task, offer the quiet space. Let space do the talking.
+
 It is done with dignity and never behind the child's back. Parental consent and the child's own assent, they can switch it off at any time, and only the single translated word ever leaves the wrist. The physiological detail stays on the device. It is a signpost the child owns, read with an adult who is on their side, not a monitor pointed at them.
- 
+
 Live: [the trusted-adult view](https://aevum-edge.netlify.app/trusted-adult-view.html).
- 
+
 ---
- 
+
 ## 🔗 Live
  
 - **Companion app (the wrist):** https://aevum-edge.netlify.app
