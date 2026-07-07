@@ -1,13 +1,13 @@
 # Aevum Edge
  
-**A privacy-first wearable that senses at the edge, reasons in the cloud with a Qwen agent, and acts locally — without ever making a diagnosis.**
+**A privacy-first wearable that senses at the edge, reasons in the cloud with a Qwen agent, and acts locally, without ever making a diagnosis.**
 > Qwen Cloud Global AI Hackathon · **Track 5: EdgeAgent** · by [Aevum Foundry AI Ltd](https://aevumfoundry.ai)
  
 ![Aevum Edge](thumbnail.png)
  
-Aevum Edge is a screenless, wrist-worn wellbeing-sensing node. Cheap, no-solder sensors read your body and your surroundings; the device extracts features **on-device**, and a **Qwen agent** running on Alibaba Cloud interprets them against *your own baseline* to return a gentle, explainable wellbeing nudge. Raw sensor data never leaves the wrist, consent is enforced fail-closed, and the system keeps working — with a simpler local rule — when the network drops.
+Aevum Edge is a screenless, wrist-worn wellbeing-sensing node. Low-cost sensors read your body and your surroundings; the device extracts features **on-device**, and a **Qwen agent** running on Alibaba Cloud interprets them against *your own baseline* to return a gentle, explainable wellbeing nudge. Raw sensor data never leaves the wrist, consent is enforced fail-closed, and the system keeps working, on a simpler local rule, when the network drops.
  
-It deliberately **never diagnoses**. It tells you whether your signals are **steady**, worth a **watch**, or **elevated** versus your baseline, explains why in plain language, and — if something is persistently off — signposts you to a real professional. It never names or infers a condition, and never tries to treat one you've declared.
+It deliberately **never diagnoses**. It tells you whether your signals are **steady**, worth a **watch**, or **elevated** versus your baseline, explains why in plain language, and, if something is persistently off, signposts you to a real professional. It never names or infers a condition, and never tries to treat one you've declared.
  
 ---
  
@@ -23,9 +23,9 @@ It deliberately **never diagnoses**. It tells you whether your signals are **ste
  
 ---
  
-## The Agent — not a single call
+## The Agent: not a single call
  
-The cloud core is a real **agent**, not one LLM request. A Qwen orchestrator runs a **plan → act → synthesise** loop (ReAct-style): it decides which specialised tools to call, chains them, grounds itself in retrieval, remembers your baseline, asks a clarifying question when it is genuinely unsure, and is bounded by a diagnosis-free safety layer. **Every tool call is logged — the trace is the evidence that it reasons, rather than merely responds.**
+The cloud core is a real **agent**, not one LLM request. A Qwen orchestrator runs a **plan, act, synthesise** loop (ReAct-style): it decides which specialised tools to call, chains them, grounds itself in retrieval, remembers your baseline, asks a clarifying question when it is genuinely unsure, and is bounded by a diagnosis-free safety layer. **Every tool call is logged. The trace is the evidence that it reasons, rather than merely responds.**
  
 ```
 features ─▶ consent gate (fail-closed) ─▶ baseline / memory ─▶ Qwen orchestrator ─▶ diagnosis-free scrub ─▶ read
@@ -35,24 +35,23 @@ features ─▶ consent gate (fail-closed) ─▶ baseline / memory ─▶ Qwen 
    compare_to_baseline · retrieve_wellbeing_context (RAG) · safety_signpost
 ```
  
-- **`compute_cardiac_features`** — heart rate + pulse-rate variability, **gated on stillness** (PPG variability is motion-sensitive, so it is only trusted when the device reports you were still).
-- **`analyse_movement`** — two-stage: recognise the activity (rest / walk / active), *then* describe movement quality (cadence, regularity, steadiness) and any fall flag.
-- **`thermal_context`** — skin-contact versus ambient temperature difference.
-- **`compare_to_baseline`** — z-scores versus *your own* rolling baseline — the memory pattern that makes "vs your baseline" rigorous rather than rhetorical.
-- **`retrieve_wellbeing_context`** — retrieval over a licence-clean wellbeing knowledge base, so advice is grounded, not invented.
-- **`safety_signpost`** — decides whether to prompt you to see a professional (escalation, never a diagnosis).
+- **`compute_cardiac_features`**: heart rate + pulse-rate variability, **gated on stillness** (PPG variability is motion-sensitive, so it is only trusted when the device reports you were still).
+- **`analyse_movement`**: two-stage: recognise the activity (rest / walk / active), *then* describe movement quality (cadence, regularity, steadiness) and any fall flag.
+- **`thermal_context`**: skin-contact versus ambient temperature difference.
+- **`compare_to_baseline`**: z-scores versus *your own* rolling baseline, the memory pattern that makes "vs your baseline" rigorous rather than rhetorical.
+- **`retrieve_wellbeing_context`**: retrieval over a licence-clean wellbeing knowledge base, so advice is grounded, not invented.
+- **`safety_signpost`**: decides whether to prompt you to see a professional (escalation, never a diagnosis).
 Two governing guards wrap the loop: **fail-closed consent** (no valid token, no processing) and a **diagnosis-free scrubber** that neutralises any output drifting toward naming or inferring a condition.
- 
 **Measured, not asserted** (run `backend/prove/metrics.py`):
  
-- **~33× data minimisation** — a raw PPG + motion window is ~8 KB; the derived payload that actually leaves the wrist is ~240 bytes.
-- **Sub-millisecond offline fallback** — the on-device rule returns instantly with no network and no model.
-- **Personalisation** — the *same* readings produce *different* flags against two different baselines (e.g. HR 82 / HRV 30 reads **steady** for an athlete, **elevated** for a calm baseline).
+- **~33× data minimisation**: a raw PPG + motion window is ~8 KB; the derived payload that actually leaves the wrist is ~240 bytes.
+- **Sub-millisecond offline fallback**: the on-device rule returns instantly with no network and no model.
+- **Personalisation**: the *same* readings produce *different* flags against two different baselines (e.g. HR 82 / HRV 30 reads **steady** for an athlete, **elevated** for a calm baseline).
 ---
  
 ## Architecture
  
-![Architecture — device at the edge, Qwen agent in the cloud](docs/architecture.png)
+![Architecture, device at the edge, Qwen agent in the cloud](docs/architecture.png)
  
 In brief:
  
@@ -76,7 +75,7 @@ In brief:
                                                        companion app + the wrist
 ```
  
-The reasoning runs on the **hosted Qwen Cloud API** on Alibaba Cloud — the base URL is visible in [`backend/agent/client.py`](backend/agent/client.py). Deployment is on **Alibaba Cloud ECS**; see [`backend/DEPLOY.md`](backend/DEPLOY.md).
+The reasoning runs on the **hosted Qwen Cloud API** on Alibaba Cloud, the base URL is visible in [`backend/agent/client.py`](backend/agent/client.py). Deployment is on **Alibaba Cloud ECS**; see [`backend/DEPLOY.md`](backend/DEPLOY.md).
  
 ---
  
@@ -84,16 +83,15 @@ The reasoning runs on the **hosted Qwen Cloud API** on Alibaba Cloud — the bas
  
 The wearable is screenless; a companion phone app handles personalisation and the human-readable side.
  
-**Onboarding & profile** (one-time, editable) — height, weight, age range; activity frequency, type and intensity; diet type, patterns and hydration; any physical or mental health context you *choose* to share (per-category consent); and your goals (move more, sleep, stress, routine, understanding your own signals). This builds your **personal baseline + context**, so interpretations are tuned to *you* rather than to an average.
+**Onboarding & profile** (one-time, editable): height, weight, age range; activity frequency, type and intensity; diet type, patterns and hydration; any physical or mental health context you *choose* to share (per-category consent); and your goals (move more, sleep, stress, routine, understanding your own signals). This builds your **personal baseline + context**, so interpretations are tuned to *you* rather than to an average.
  
-**What the app shows** — your flag (steady / watch / elevated vs baseline); a plain-language explanation that cites your own numbers; general recommendations across food, movement and rest; your daily step count; a signpost to *"consider seeing a professional if this continues or you feel unwell"*; and optional product links with a clear affiliate disclosure. It never names or infers a condition, and never treats a declared one.
-
+**What the app shows**: your flag (steady / watch / elevated vs baseline); a plain-language explanation that cites your own numbers; general recommendations across food, movement and rest; your daily step count; a signpost to *"consider seeing a professional if this continues or you feel unwell"*; and optional product links with a clear affiliate disclosure. It never names or infers a condition, and never treats a declared one.
+ 
 ## 🔗 Live
-
-- **Companion app:** https://aevum-edge.netlify.app
-- **Agent API (live):** http://8.208.76.67/ — returns live Qwen status
-- **Qwen base URL (code proof):** [backend/agent/client.py](backend/agent/client.py)
  
+- **Companion app:** https://aevum-edge.netlify.app
+- **Agent API (live):** http://8.208.76.67/ returns live Qwen status
+- **Qwen base URL (code proof):** [backend/agent/client.py](backend/agent/client.py)
 ---
  
 ## What's in here
@@ -103,7 +101,7 @@ Edge-v1.0/
 ├── LICENSE                       MIT
 ├── README.md                     this file
 ├── firmware/
-│   └── edge.ino         ESP32 sketch: read sensors → features → POST → act
+│   └── edge.ino                  ESP32 sketch: read sensors → features → POST → act
 ├── backend/                      the Agent (FastAPI + Qwen)
 │   ├── app.py                    FastAPI: / health, /interpret, /baseline
 │   ├── requirements.txt
@@ -120,7 +118,7 @@ Edge-v1.0/
 │   │   ├── rag.py                BM25 retriever over the wellbeing KB
 │   │   └── local_rule.py         transparent offline fallback (mirrors the firmware)
 │   ├── kb/wellbeing/*.md         licence-clean wellbeing knowledge cards
-│   └── prove/                    simulate.py + metrics.py — prove the agent with no hardware
+│   └── prove/                    simulate.py + metrics.py, prove the agent with no hardware
 └── docs/
     ├── architecture.png          system diagram
     └── architecture.svg
@@ -128,36 +126,37 @@ Edge-v1.0/
  
 ---
  
-## Hardware (no-solder, ~£45–49)
+## Hardware (solder-light, ~£45–49)
  
-XIAO ESP32-S3 + Seeed expansion board · MAX30102 (PPG) · MPU-6050 (motion) · BME280 (ambient temp/humidity) · LiPo · mesh wristband. All sensors share one **3.3 V** I²C bus at distinct addresses: `0x57`, `0x68`, `0x76`. An optional TMP117 (`0x48`) adds **research-grade** skin temperature with zero firmware rework — the address slot is already reserved.
+XIAO ESP32-S3 + Seeed expansion board · MAX30102 (PPG) · MPU-6050 (motion) · BME280 (ambient temp/humidity) · LiPo · mesh wristband. All sensors share one **3.3 V** I²C bus at distinct addresses: `0x57`, `0x68`, `0x76`. An optional TMP117 (`0x48`) adds **research-grade** skin temperature with zero firmware rework, the address slot is already reserved.
  
-The whole build is deliberately solder-free: a small breadboard and jumper wires only, so it is accessible to makers who can't (or shouldn't) solder.
+The build sits on the Seeed expansion board and a small breadboard, with the sensors wired by jumper. The only soldering is the header strips onto the XIAO and the pulse board. It stays accessible: solder-light, low-cost, and fully functional even unpaid.
  
 ---
  
 ## Quick start
  
-**1. Backend (Alibaba Cloud)** — see [`backend/DEPLOY.md`](backend/DEPLOY.md). In short: deploy `app.py` on an **Alibaba Cloud ECS instance** (or Simple Application Server / Function Compute), set `DASHSCOPE_API_KEY` and `CONSENT_SECRET`, run it, and open the port. Visiting `/` returns a health JSON — **this URL is your proof of Alibaba Cloud deployment.** The hosted Qwen Cloud base URL is visible in [`backend/agent/client.py`](backend/agent/client.py).
+**1. Backend (Alibaba Cloud)**: see [`backend/DEPLOY.md`](backend/DEPLOY.md). In short: deploy `app.py` on an **Alibaba Cloud ECS instance** (or Simple Application Server / Function Compute), set `DASHSCOPE_API_KEY` and `CONSENT_SECRET`, run it, and open the port. Visiting `/` returns a health JSON, this URL is your proof of Alibaba Cloud deployment. The hosted Qwen Cloud base URL is visible in [`backend/agent/client.py`](backend/agent/client.py).
  
-**2. Firmware** — open `firmware/edge.ino` in the Arduino IDE (board: `XIAO_ESP32S3`). Install the libraries listed in the sketch header, set your Wi-Fi and the backend URL, and flash.
+**2. Firmware**: open `firmware/edge.ino` in the Arduino IDE (board: `XIAO_ESP32S3`). Install the libraries listed in the sketch header, set your Wi-Fi and the backend URL, and flash.
  
-**3. Run** — the device samples every ~15 s and prints the flag, nudge and explanation to the Serial Monitor. Pull the network and watch it fall back to the local rule. To prove the whole agent **with no hardware**: `FORCE_MOCK=1 python backend/prove/simulate.py` and `FORCE_MOCK=1 python backend/prove/metrics.py`.
+**3. Run**: the device samples every ~15 s and prints the flag, nudge and explanation to the Serial Monitor. Pull the network and watch it fall back to the local rule. To prove the whole agent **with no hardware**: `FORCE_MOCK=1 python backend/prove/simulate.py` and `FORCE_MOCK=1 python backend/prove/metrics.py`.
  
 ---
  
 ## Privacy & safety
  
-- **Data minimisation** — only derived features (a handful of numbers) are sent; raw PPG and motion waveforms never leave the device.
-- **Consent, fail-closed** — the backend refuses to interpret anything without a valid consent token; withdraw consent and processing stops. Health and mental-health context is special-category data, captured per-category, stored on-device, and deletable.
-- **Diagnosis-free by construction** — the model is constrained to a wellbeing vocabulary, and a server-side scrubber strips any output that drifts toward a medical claim.
-- **Not a medical device** — output is general wellbeing context only, never a diagnosis or treatment. If you feel unwell, speak to a healthcare professional.
+- **Data minimisation**: only derived features (a handful of numbers) are sent; raw PPG and motion waveforms never leave the device.
+- **Consent, fail-closed**: the backend refuses to interpret anything without a valid consent token; withdraw consent and processing stops. Health and mental-health context is special-category data, captured per-category, stored on-device, and deletable.
+- **Diagnosis-free by construction**: the model is constrained to a wellbeing vocabulary, and a server-side scrubber strips any output that drifts toward a medical claim.
+- **Not a medical device**: output is general wellbeing context only, never a diagnosis or treatment. If you feel unwell, speak to a healthcare professional.
 ---
  
 ## About
  
-Built by **Aevum Foundry AI Ltd**, a UK AI-tools company. The first real-world pilot is planned for **Terra**, a rural cooperative wellness community in the Algarve, Portugal — a setting where privacy matters and reliable connectivity can't be assumed, which is exactly what an edge-first design is for.
+Built by **Aevum Foundry AI Ltd**, a UK AI-tools company. The first real-world pilot is planned for **Terra**, a rural cooperative wellness community we are developing in the Algarve, Portugal, and meant to take shape over the coming years, a setting where privacy matters and reliable connectivity can't be assumed, which is exactly what an edge-first design is for.
  
 ## Licence
  
-MIT — see [`LICENSE`](LICENSE). Copyright (c) 2026 Aevum Foundry AI Ltd.
+MIT. See [`LICENSE`](LICENSE). Copyright (c) 2026 Aevum Foundry AI Ltd.
+ 
