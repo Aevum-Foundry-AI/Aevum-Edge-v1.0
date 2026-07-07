@@ -1,11 +1,11 @@
-# Aevum Edge Sentinel
+# Aevum Edge
  
 **A privacy-first wearable that senses at the edge, reasons in the cloud with a Qwen agent, and acts locally — without ever making a diagnosis.**
 > Qwen Cloud Global AI Hackathon · **Track 5: EdgeAgent** · by [Aevum Foundry AI Ltd](https://aevumfoundry.ai)
  
-![Aevum Edge Sentinel](thumbnail.png)
+![Aevum Edge](thumbnail.png)
  
-Aevum Edge Sentinel is a screenless, wrist-worn wellbeing-sensing node. Cheap, no-solder sensors read your body and your surroundings; the device extracts features **on-device**, and a **Qwen agent** running on Alibaba Cloud interprets them against *your own baseline* to return a gentle, explainable wellbeing nudge. Raw sensor data never leaves the wrist, consent is enforced fail-closed, and the system keeps working — with a simpler local rule — when the network drops.
+Aevum Edge is a screenless, wrist-worn wellbeing-sensing node. Cheap, no-solder sensors read your body and your surroundings; the device extracts features **on-device**, and a **Qwen agent** running on Alibaba Cloud interprets them against *your own baseline* to return a gentle, explainable wellbeing nudge. Raw sensor data never leaves the wrist, consent is enforced fail-closed, and the system keeps working — with a simpler local rule — when the network drops.
  
 It deliberately **never diagnoses**. It tells you whether your signals are **steady**, worth a **watch**, or **elevated** versus your baseline, explains why in plain language, and — if something is persistently off — signposts you to a real professional. It never names or infers a condition, and never tries to treat one you've declared.
  
@@ -13,7 +13,7 @@ It deliberately **never diagnoses**. It tells you whether your signals are **ste
  
 ## Why it fits EdgeAgent
  
-| Track requirement                | How Aevum Edge Sentinel does it                                                                                                        |
+| Track requirement                | How Aevum Edge does it                                                                                                        |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | **Perceive** via edge sensors    | PPG (heart rate), motion (accelerometer/gyro), skin-contact temperature and ambient temp/humidity over one I²C bus                     |
 | **Reason** via cloud APIs        | A **Qwen `qwen3.7-plus` agent** on Alibaba Cloud plans, calls specialised tools, grounds itself with retrieval, remembers your baseline, and synthesises a structured wellbeing flag |
@@ -23,7 +23,7 @@ It deliberately **never diagnoses**. It tells you whether your signals are **ste
  
 ---
  
-## The Sentinel Agent — not a single call
+## The Agent — not a single call
  
 The cloud core is a real **agent**, not one LLM request. A Qwen orchestrator runs a **plan → act → synthesise** loop (ReAct-style): it decides which specialised tools to call, chains them, grounds itself in retrieval, remembers your baseline, asks a clarifying question when it is genuinely unsure, and is bounded by a diagnosis-free safety layer. **Every tool call is logged — the trace is the evidence that it reasons, rather than merely responds.**
  
@@ -67,7 +67,7 @@ In brief:
                        derived features + personal context (consented)│ HTTPS
                                                                        ▼
 ┌──────────────────────────── Alibaba Cloud (ECS) ───────────────────────────┐
-│  FastAPI ─► the Sentinel Agent  (Qwen qwen3.7-plus via the DashScope API)   │
+│  FastAPI ─► the Agent  (Qwen qwen3.7-plus via the DashScope API)   │
 │            orchestrator · 6 tools · RAG · per-user memory · safety layer     │
 │            diagnosis-free system prompt + server-side scrubber               │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -90,7 +90,7 @@ The wearable is screenless; a companion phone app handles personalisation and th
 
 ## 🔗 Live
 
-- **Companion app:** https://aevum-edge-sentinel.netlify.app
+- **Companion app:** https://aevum-edge.netlify.app
 - **Agent API (live):** http://8.208.76.67/ — returns live Qwen status
 - **Qwen base URL (code proof):** [backend/agent/client.py](backend/agent/client.py)
  
@@ -99,12 +99,12 @@ The wearable is screenless; a companion phone app handles personalisation and th
 ## What's in here
  
 ```
-Edge-Sentinel-v1.0/
+Edge-v1.0/
 ├── LICENSE                       MIT
 ├── README.md                     this file
 ├── firmware/
-│   └── edge_sentinel.ino         ESP32 sketch: read sensors → features → POST → act
-├── backend/                      the Sentinel Agent (FastAPI + Qwen)
+│   └── edge.ino         ESP32 sketch: read sensors → features → POST → act
+├── backend/                      the Agent (FastAPI + Qwen)
 │   ├── app.py                    FastAPI: / health, /interpret, /baseline
 │   ├── requirements.txt
 │   ├── .env.example              the environment variables the backend expects
@@ -140,7 +140,7 @@ The whole build is deliberately solder-free: a small breadboard and jumper wires
  
 **1. Backend (Alibaba Cloud)** — see [`backend/DEPLOY.md`](backend/DEPLOY.md). In short: deploy `app.py` on an **Alibaba Cloud ECS instance** (or Simple Application Server / Function Compute), set `DASHSCOPE_API_KEY` and `CONSENT_SECRET`, run it, and open the port. Visiting `/` returns a health JSON — **this URL is your proof of Alibaba Cloud deployment.** The hosted Qwen Cloud base URL is visible in [`backend/agent/client.py`](backend/agent/client.py).
  
-**2. Firmware** — open `firmware/edge_sentinel.ino` in the Arduino IDE (board: `XIAO_ESP32S3`). Install the libraries listed in the sketch header, set your Wi-Fi and the backend URL, and flash.
+**2. Firmware** — open `firmware/edge.ino` in the Arduino IDE (board: `XIAO_ESP32S3`). Install the libraries listed in the sketch header, set your Wi-Fi and the backend URL, and flash.
  
 **3. Run** — the device samples every ~15 s and prints the flag, nudge and explanation to the Serial Monitor. Pull the network and watch it fall back to the local rule. To prove the whole agent **with no hardware**: `FORCE_MOCK=1 python backend/prove/simulate.py` and `FORCE_MOCK=1 python backend/prove/metrics.py`.
  
