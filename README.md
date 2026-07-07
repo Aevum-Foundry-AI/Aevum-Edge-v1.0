@@ -3,7 +3,7 @@
 **A privacy-first wearable that senses at the edge, reasons in the cloud with a Qwen agent, and acts locally, without ever making a diagnosis.**
 > Qwen Cloud Global AI Hackathon · **Track 5: EdgeAgent** · by [Aevum Foundry AI Ltd](https://aevumfoundry.ai)
  
-![Aevum Edge](thumbnail.png)
+![Aevum Edge](proj-thumbnail.png)
  
 Aevum Edge is a screenless, wrist-worn wellbeing-sensing node. Low-cost sensors read your body and your surroundings; the device extracts features **on-device**, and a **Qwen agent** running on Alibaba Cloud interprets them against *your own baseline* to return a gentle, explainable wellbeing nudge. Raw sensor data never leaves the wrist, consent is enforced fail-closed, and the system keeps working, on a simpler local rule, when the network drops.
  
